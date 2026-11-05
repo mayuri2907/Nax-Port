@@ -68,3 +68,4 @@ export const PLAYGROUND_STICKERS = [
   { id: 'stk-7', label: 'Jetpack Compose', color: '#171717', text: '#ffffff', rotate: -4 },
   { id: 'stk-8', label: 'Keep Building 🚀', color: '#FFFFFF', text: '#171717', rotate: 7 }
 ];
+

@@ -138,3 +138,4 @@ export const ManifestoSection: React.FC = () => {
     </section>
   );
 };
+

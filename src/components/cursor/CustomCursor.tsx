@@ -11,7 +11,6 @@ export const CustomCursor: React.FC = () => {
 
   // Determine cursor styles based on variant
   const isProject = variant === 'project';
-  const isCharacter = variant === 'character';
   const isHover = variant === 'hover';
   const isDrag = variant === 'drag';
 
@@ -22,8 +21,6 @@ export const CustomCursor: React.FC = () => {
         className={`fixed left-0 top-0 flex items-center justify-center font-grotesk font-semibold text-xs transition-colors duration-200 ${
           isProject
             ? 'h-10 px-4 bg-ink-primary text-white border border-accent-orange shadow-brutal-sm rounded-full'
-            : isCharacter
-            ? 'h-9 px-3 bg-accent-orange text-white rounded-full shadow-brutal-sm'
             : isDrag
             ? 'h-9 px-3 bg-accent-yellow text-ink-primary rounded-full shadow-brutal-sm'
             : isHover
@@ -33,8 +30,8 @@ export const CustomCursor: React.FC = () => {
         animate={{
           x: position.x,
           y: position.y,
-          translateX: isProject || isCharacter || isDrag ? '-50%' : '-50%',
-          translateY: isProject || isCharacter || isDrag ? '-50%' : '-50%',
+          translateX: isProject || isDrag ? '-50%' : '-50%',
+          translateY: isProject || isDrag ? '-50%' : '-50%',
           scale: isClicked ? 0.88 : 1,
         }}
         transition={{
@@ -45,7 +42,7 @@ export const CustomCursor: React.FC = () => {
         }}
       >
         <AnimatePresence mode="wait">
-          {(isProject || isCharacter || isDrag || cursorText) && (
+          {(isProject || isDrag || cursorText) && (
             <motion.span
               key={cursorText || variant}
               initial={{ opacity: 0, scale: 0.8 }}
@@ -53,14 +50,14 @@ export const CustomCursor: React.FC = () => {
               exit={{ opacity: 0, scale: 0.8 }}
               className="whitespace-nowrap tracking-wider uppercase text-[10px]"
             >
-              {cursorText || (isProject ? 'View Project ↗' : isCharacter ? 'Poke Navin 👉' : isDrag ? 'Drag Me ✋' : '')}
+              {cursorText || (isProject ? 'View Project ↗' : isDrag ? 'Drag Me ✋' : '')}
             </motion.span>
           )}
         </AnimatePresence>
       </motion.div>
 
       {/* Tiny Core Pointer Dot */}
-      {!isProject && !isCharacter && !isDrag && (
+      {!isProject && !isDrag && (
         <motion.div
           className={`fixed left-0 top-0 rounded-full ${
             isHover ? 'w-2 h-2 bg-accent-orange' : 'w-2 h-2 bg-ink-primary'
@@ -91,3 +88,4 @@ export const CustomCursor: React.FC = () => {
     </div>
   );
 };
+

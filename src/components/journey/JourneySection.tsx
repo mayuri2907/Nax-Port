@@ -103,3 +103,4 @@ export const JourneySection: React.FC = () => {
     </section>
   );
 };
+

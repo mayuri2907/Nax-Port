@@ -55,3 +55,4 @@ export const SOCIAL_LINKS = {
     ariaLabel: 'Send an email to Navin Chaudhary'
   }
 };
+

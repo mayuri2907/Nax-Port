@@ -194,20 +194,12 @@ export const ContactSection: React.FC = () => {
         {/* Right Column: Functional Contact Form (7 cols) */}
         <div className="lg:col-span-7 bg-white border-3 border-ink-primary rounded-3xl p-6 sm:p-10 shadow-brutal-lg">
           
-          {/* Reactive Character Hint */}
+          {/* Status Hint */}
           <div className="flex items-center gap-3 p-3 bg-bg-primary border border-borderline rounded-2xl mb-8">
             <div className="w-10 h-10 rounded-full border border-ink-primary overflow-hidden shrink-0 bg-accent-yellow">
               <img
-                src={
-                  fieldFocus === 'email'
-                    ? '/assets/character/navin-curious.png'
-                    : fieldFocus === 'message'
-                    ? '/assets/character/navin-focused.png'
-                    : isSubmitted
-                    ? '/assets/character/navin-happy.png'
-                    : '/assets/character/navin-idle.png'
-                }
-                alt="Navin character observing form"
+                src="/assets/character/navin-avatar.png"
+                alt="Navin Chaudhary avatar"
                 className="w-full h-full object-cover"
               />
             </div>
@@ -216,10 +208,10 @@ export const ContactSection: React.FC = () => {
                 {isSubmitted
                   ? "Awesome! Message dispatched. I'll get back to you shortly!"
                   : fieldFocus === 'message'
-                  ? 'Navin is focused on your message...'
+                  ? 'Drafting project brief or inquiry...'
                   : fieldFocus === 'email'
                   ? 'Great, drop your best email address!'
-                  : 'Type below to send a message directly to Navin Chaudhary.'}
+                  : 'Send a message directly to Navin Chaudhary.'}
               </span>
             </div>
           </div>

@@ -66,3 +66,4 @@ export const WhatsappIcon: React.FC<IconProps> = ({ className = 'w-4 h-4' }) => 
     <path d="M8 10a5 5 0 0 0 6 6l1.5-1.5a1 1 0 0 0 0-1.4l-2.1-2.1a1 1 0 0 0-1.4 0l-.8.8a3.5 3.5 0 0 1-2.2-2.2l.8-.8a1 1 0 0 0 0-1.4L8.7 6.3a1 1 0 0 0-1.4 0L6 7.6a2 2 0 0 0 2 2.4Z" />
   </svg>
 );
+

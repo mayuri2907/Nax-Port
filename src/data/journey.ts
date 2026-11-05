@@ -51,3 +51,4 @@ export const JOURNEY_MILESTONES: Milestone[] = [
     type: 'Ecosystem'
   }
 ];
+

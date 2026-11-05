@@ -190,28 +190,9 @@ export const HeroSection: React.FC = () => {
           </motion.div>
         </div>
 
-        {/* Right Column: Custom Anime Character Interaction Stage (5 cols) */}
+        {/* Right Column: Custom Anime Character Rig (5 cols) */}
         <div className="lg:col-span-5 flex flex-col items-center justify-center relative">
-          
-          {/* Hand-drawn Arrow Callout */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.8 }}
-            className="hidden sm:flex items-center gap-2 mb-2 font-grotesk text-xs font-bold text-accent-orange uppercase tracking-wider"
-          >
-            <span>👉 Move cursor or poke Navin!</span>
-          </motion.div>
-
-          {/* Interactive Character Stage with Eye Tracking & Mood Engine */}
-          <CharacterStage size="hero" showControls={true} />
-
-          {/* Handwritten Tag underneath */}
-          <div className="mt-4 flex items-center gap-2">
-            <span className="text-xs font-mono text-ink-secondary">NAVIN_CHAUDHARY.avatar_v2</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-accent-orange" />
-            <span className="text-xs font-mono text-ink-secondary">60 FPS Real-time</span>
-          </div>
+          <CharacterStage />
         </div>
       </div>
 
