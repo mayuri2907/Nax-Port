@@ -85,6 +85,19 @@ export const OfficialCharacterRig: React.FC = () => {
             <clipPath id="socketClipRight">
               <path d="M 556 334 C 568 327, 598 327, 610 335 C 598 340, 568 340, 556 334 Z" />
             </clipPath>
+
+            {/* Natural Sclera Gradient with Eyelid Shadow */}
+            <linearGradient id="scleraGradLeft" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#D5CDC6" />
+              <stop offset="35%" stopColor="#EAE4DE" />
+              <stop offset="100%" stopColor="#FAF7F4" />
+            </linearGradient>
+
+            <linearGradient id="scleraGradRight" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#D5CDC6" />
+              <stop offset="35%" stopColor="#EAE4DE" />
+              <stop offset="100%" stopColor="#FAF7F4" />
+            </linearGradient>
           </defs>
 
           {/* ========================================== */}
@@ -100,7 +113,7 @@ export const OfficialCharacterRig: React.FC = () => {
               ease: 'easeInOut',
             }}
           >
-            {/* BASE OFFICIAL ILLUSTRATION (Clean seamless sclera base plate) */}
+            {/* BASE OFFICIAL ILLUSTRATION (Pristine original artwork) */}
             <image
               href="/assets/character/navin-base-sclera.png"
               x="0"
@@ -118,6 +131,12 @@ export const OfficialCharacterRig: React.FC = () => {
             {/* LEFT EYE PUPIL (Smooth Real-Time Tracking) */}
             {/* ------------------------------------------ */}
             <g clipPath="url(#socketClipLeft)">
+              {/* Natural anatomical sclera base (strictly contained within the eye socket) */}
+              <path
+                d="M 412 334 C 424 327, 456 327, 468 335 C 456 342, 424 342, 412 334 Z"
+                fill="url(#scleraGradLeft)"
+              />
+
               <motion.g
                 animate={{
                   x: pupilX,
@@ -198,6 +217,12 @@ export const OfficialCharacterRig: React.FC = () => {
             {/* RIGHT EYE PUPIL (Smooth Real-Time Tracking)*/}
             {/* ------------------------------------------ */}
             <g clipPath="url(#socketClipRight)">
+              {/* Natural anatomical sclera base (strictly contained within the eye socket) */}
+              <path
+                d="M 556 334 C 568 327, 598 327, 610 335 C 598 340, 568 340, 556 334 Z"
+                fill="url(#scleraGradRight)"
+              />
+
               <motion.g
                 animate={{
                   x: pupilX,
@@ -302,14 +327,12 @@ export const OfficialCharacterRig: React.FC = () => {
                 transition={{ repeat: Infinity, duration: 1.2 }}
                 transform="translate(680, 220)"
               >
-                {/* Large vibrant anime sweat drop */}
                 <path
                   d="M 0 -18 C -10 -4, -12 8, 0 16 C 12 8, 10 -4, 0 -18 Z"
                   fill="#38BDF8"
                   stroke="#0284C7"
                   strokeWidth="2.5"
                 />
-                {/* Specular highlight */}
                 <ellipse cx="-3" cy="6" rx="2.5" ry="4" fill="white" opacity="0.8" />
               </motion.g>
             )}
