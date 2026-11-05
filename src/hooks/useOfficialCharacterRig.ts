@@ -15,15 +15,13 @@ export type CharacterExpression =
 
 export interface OfficialCharacterRigState {
   expression: CharacterExpression;
-  pupilX: number; // clamped px offset (-9 to 9)
-  pupilY: number; // clamped px offset (-5 to 5)
-  headRotateX: number; // degrees (-4 to 4)
-  headRotateY: number; // degrees (-5 to 5)
+  pupilX: number; // clamped px offset (-3.5 to 3.5)
+  pupilY: number; // clamped px offset (-2.0 to 2.0)
+  headRotateX: number; // degrees (-3.5 to 3.5)
+  headRotateY: number; // degrees (-4.5 to 4.5)
   isBlinking: boolean;
-  eyelidClosedFraction: number; // 0 (open) to 1 (closed)
-  browLeft: { y: number; rotate: number };
-  browRight: { y: number; rotate: number };
-  mouthState: 'neutral' | 'smile' | 'curious' | 'open' | 'annoyed' | 'angry' | 'bored';
+  isSleeping: boolean;
+  isBored: boolean;
   containerRef: React.RefObject<HTMLDivElement | null>;
   speechMessage: string | null;
   handleCharacterClick: () => void;
@@ -44,7 +42,7 @@ export const DIALOGUE_MAP: Record<CharacterExpression, string[]> = {
   ],
   curious: [
     "Interested in my tech stack or projects?",
-    "Need a distributed architecture or mobile app?",
+    "Need an innovative web or mobile architecture?",
     "Taking a closer look?"
   ],
   happy: [
@@ -110,12 +108,12 @@ export function useOfficialCharacterRig(): OfficialCharacterRigState {
     }, durationMs);
   }, []);
 
-  // Natural Random Blinking
+  // Natural Random Blinking (120ms blink every 3.2s to 5.8s)
   useEffect(() => {
     let timer: NodeJS.Timeout;
 
     const scheduleBlink = () => {
-      const delay = Math.random() * 2800 + 3200; // 3.2s to 6.0s
+      const delay = Math.random() * 2600 + 3200;
       timer = setTimeout(() => {
         setExpression((curr) => {
           if (curr !== 'sleeping') {
@@ -177,25 +175,24 @@ export function useOfficialCharacterRig(): OfficialCharacterRigState {
       const deltaX = e.clientX - centerX;
       const deltaY = e.clientY - centerY;
 
-      // Normalization
+      // Normalization relative to window
       const normX = deltaX / (window.innerWidth * 0.45);
       const normY = deltaY / (window.innerHeight * 0.45);
 
-      // Clamp pupil travel within realistic iris limits (-8px to 8px horizontal, -5px to 5px vertical)
-      const targetPupilX = Math.max(-8, Math.min(8, normX * 8));
-      const targetPupilY = Math.max(-5, Math.min(5, normY * 5));
+      // Clamp pupil travel within realistic, subtle limits (-3.5px to +3.5px X, -2.0px to +2.0px Y)
+      const targetPupilX = Math.max(-3.5, Math.min(3.5, normX * 3.5));
+      const targetPupilY = Math.max(-2.0, Math.min(2.0, normY * 2.0));
 
       setPupilX(targetPupilX);
       setPupilY(targetPupilY);
 
-      // Subtle 3D perspective head rotation
-      const targetRotY = Math.max(-5, Math.min(5, normX * 5));
-      const targetRotX = Math.max(-4, Math.min(4, -normY * 4));
+      // Subtle 3D perspective head rotation (-4deg to +4deg)
+      const targetRotY = Math.max(-4.5, Math.min(4.5, normX * 4.5));
+      const targetRotX = Math.max(-3.5, Math.min(3.5, -normY * 3.5));
 
       setHeadRotateY(targetRotY);
       setHeadRotateX(targetRotX);
 
-      // Transition to 'looking' if active
       setExpression((prev) => {
         if (prev === 'sleeping' || prev === 'bored') {
           return 'idle';
@@ -277,51 +274,6 @@ export function useOfficialCharacterRig(): OfficialCharacterRigState {
     });
   }, []);
 
-  // Compute geometric facial offsets
-  let eyelidClosedFraction = 0;
-  if (expression === 'sleeping') {
-    eyelidClosedFraction = 1;
-  } else if (isBlinking) {
-    eyelidClosedFraction = 1;
-  } else if (expression === 'bored') {
-    eyelidClosedFraction = 0.52;
-  } else if (expression === 'annoyed') {
-    eyelidClosedFraction = 0.28;
-  } else if (expression === 'angry') {
-    eyelidClosedFraction = 0.35;
-  }
-
-  let browLeft = { y: 0, rotate: 0 };
-  let browRight = { y: 0, rotate: 0 };
-
-  if (expression === 'curious') {
-    browLeft = { y: -5, rotate: -3 };
-    browRight = { y: -1, rotate: 2 };
-  } else if (expression === 'surprised') {
-    browLeft = { y: -7, rotate: -2 };
-    browRight = { y: -7, rotate: 2 };
-  } else if (expression === 'thinking') {
-    browLeft = { y: -4, rotate: -5 };
-    browRight = { y: 2, rotate: 4 };
-  } else if (expression === 'annoyed') {
-    browLeft = { y: 2, rotate: 4 };
-    browRight = { y: 4, rotate: 5 };
-  } else if (expression === 'angry') {
-    browLeft = { y: 5, rotate: 8 };
-    browRight = { y: 5, rotate: -8 };
-  } else if (expression === 'bored' || expression === 'sleeping') {
-    browLeft = { y: 2, rotate: 0 };
-    browRight = { y: 2, rotate: 0 };
-  }
-
-  let mouthState: OfficialCharacterRigState['mouthState'] = 'neutral';
-  if (expression === 'happy') mouthState = 'smile';
-  else if (expression === 'surprised') mouthState = 'open';
-  else if (expression === 'curious') mouthState = 'curious';
-  else if (expression === 'annoyed') mouthState = 'annoyed';
-  else if (expression === 'angry') mouthState = 'angry';
-  else if (expression === 'bored') mouthState = 'bored';
-
   return {
     expression,
     pupilX,
@@ -329,10 +281,8 @@ export function useOfficialCharacterRig(): OfficialCharacterRigState {
     headRotateX,
     headRotateY,
     isBlinking,
-    eyelidClosedFraction,
-    browLeft,
-    browRight,
-    mouthState,
+    isSleeping: expression === 'sleeping',
+    isBored: expression === 'bored',
     containerRef,
     speechMessage,
     handleCharacterClick,

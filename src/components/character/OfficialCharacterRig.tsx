@@ -11,10 +11,8 @@ export const OfficialCharacterRig: React.FC = () => {
     headRotateX,
     headRotateY,
     isBlinking,
-    eyelidClosedFraction,
-    browLeft,
-    browRight,
-    mouthState,
+    isSleeping,
+    isBored,
     containerRef,
     speechMessage,
     handleCharacterClick,
@@ -22,25 +20,7 @@ export const OfficialCharacterRig: React.FC = () => {
     handleMouseLeave
   } = useOfficialCharacterRig();
 
-  // Dynamic SVG Mouth Path Morph for Expressions
-  const getMouthD = () => {
-    switch (mouthState) {
-      case 'smile':
-        return 'M 476 462 Q 514 484 552 462 Q 514 476 476 462 Z';
-      case 'open':
-        return 'M 498 456 Q 514 452 530 456 Q 530 478 514 478 Q 498 478 498 456 Z';
-      case 'curious':
-        return 'M 478 464 Q 516 464 550 458';
-      case 'annoyed':
-        return 'M 480 467 Q 514 463 548 467';
-      case 'angry':
-        return 'M 476 470 Q 514 460 552 470';
-      case 'bored':
-        return 'M 482 464 Q 514 466 546 463';
-      default: // neutral resting mouth
-        return 'M 478 463 Q 514 466 550 463';
-    }
-  };
+  const isEyelidClosed = isBlinking || isSleeping;
 
   return (
     <div className="relative flex flex-col items-center select-none">
@@ -74,20 +54,23 @@ export const OfficialCharacterRig: React.FC = () => {
         onMouseLeave={handleMouseLeave}
         data-cursor="hover"
         className="relative w-80 h-[330px] sm:w-96 sm:h-[395px] md:w-[440px] md:h-[430px] lg:w-[480px] lg:h-[470px] cursor-pointer group"
+        style={{
+          perspective: 1000,
+        }}
       >
         <svg
           viewBox="0 0 1024 935"
           className="w-full h-full filter drop-shadow-2xl overflow-visible"
         >
           <defs>
-            {/* Left Eye Opening Contour ClipPath */}
-            <clipPath id="officialLeftEyeClip">
-              <path d="M 406 338 Q 438 327 472 338 Q 440 347 406 338 Z" />
+            {/* Left Eye Socket Opening ClipPath */}
+            <clipPath id="socketClipLeft">
+              <path d="M 408 337 Q 440 326 472 337 Q 440 346 408 337 Z" />
             </clipPath>
 
-            {/* Right Eye Opening Contour ClipPath */}
-            <clipPath id="officialRightEyeClip">
-              <path d="M 552 338 Q 584 327 618 338 Q 586 347 552 338 Z" />
+            {/* Right Eye Socket Opening ClipPath */}
+            <clipPath id="socketClipRight">
+              <path d="M 552 337 Q 582 326 612 337 Q 582 346 552 337 Z" />
             </clipPath>
           </defs>
 
@@ -99,12 +82,12 @@ export const OfficialCharacterRig: React.FC = () => {
               y: [0, -2.5, 0],
             }}
             transition={{
-              duration: expression === 'sleeping' ? 4.8 : 3.6,
+              duration: isSleeping ? 4.8 : 3.6,
               repeat: Infinity,
               ease: 'easeInOut',
             }}
           >
-            {/* BASE OFFICIAL ILLUSTRATION (Pristine authentic artwork) */}
+            {/* BASE OFFICIAL ILLUSTRATION (Pristine authentic artwork with clean sclera) */}
             <image
               href="/assets/character/navin-base-sclera.png"
               x="0"
@@ -133,20 +116,9 @@ export const OfficialCharacterRig: React.FC = () => {
               }}
             >
               {/* ------------------------------------------ */}
-              {/* LEFT EYE SOCKET INTERIOR                   */}
+              {/* LEFT EYE PUPIL (Smooth Real-Time Tracking) */}
               {/* ------------------------------------------ */}
-              <g clipPath="url(#officialLeftEyeClip)">
-                {/* Clean Sclera Base Fill */}
-                <rect x="398" y="320" width="80" height="32" fill="#FAF6F2" />
-                
-                {/* Upper eyelid soft realistic shadow */}
-                <path
-                  d="M 406 338 Q 438 327 472 338 L 472 331 L 406 331 Z"
-                  fill="#CFBEB4"
-                  opacity="0.65"
-                />
-
-                {/* LEFT PUPIL (Real-Time Physics Cursor Tracking) */}
+              <g clipPath="url(#socketClipLeft)">
                 <motion.g
                   animate={{
                     x: pupilX,
@@ -154,65 +126,60 @@ export const OfficialCharacterRig: React.FC = () => {
                   }}
                   transition={{
                     type: 'spring',
-                    stiffness: 420,
-                    damping: 26,
-                    mass: 0.15,
+                    stiffness: 450,
+                    damping: 28,
+                    mass: 0.12,
                   }}
                 >
                   <image
-                    href="/assets/character/navin-pupil-sprite.png"
-                    x="427"
-                    y="323"
-                    width="28"
-                    height="28"
+                    href="/assets/character/navin-iris-left-clean.png"
+                    x="430"
+                    y="328"
+                    width="22"
+                    height="16"
                   />
                 </motion.g>
 
-                {/* LEFT UPPER EYELID DROP CURTAIN (Blinking, Drowsy, Sleep) */}
-                <motion.path
-                  d="M 395 310 L 480 310 L 480 348 L 395 348 Z"
-                  fill="#E5A885"
+                {/* Left Eyelid Drop Curtain (ONLY VISIBLE ON BLINK/SLEEP/BORED) */}
+                <motion.g
+                  initial={{ opacity: 0 }}
                   animate={{
-                    y: eyelidClosedFraction * 24 - 24,
+                    opacity: isEyelidClosed ? 1 : isBored ? 0.75 : 0,
+                    y: isEyelidClosed ? 0 : isBored ? -6 : -25,
                   }}
                   transition={{
-                    duration: isBlinking ? 0.08 : 0.22,
+                    duration: isBlinking ? 0.08 : 0.2,
                     ease: 'easeInOut',
                   }}
-                />
+                >
+                  <path
+                    d="M 400 315 L 480 315 L 480 348 L 400 348 Z"
+                    fill="#E5A885"
+                  />
+                  {/* Closed Eyelash Line */}
+                  <path
+                    d="M 406 338 Q 440 343 474 338"
+                    stroke="#140E0D"
+                    strokeWidth="4.2"
+                    strokeLinecap="round"
+                    fill="none"
+                  />
+                </motion.g>
               </g>
 
-              {/* Left Eyelash Definition Line */}
+              {/* Left Eyelash Upper Contour (Crisp & Dark) */}
               <path
-                d="M 405 338 Q 438 326 473 337"
+                d="M 406 338 Q 440 326 473 337"
                 stroke="#140E0D"
                 strokeWidth="4.2"
                 strokeLinecap="round"
                 fill="none"
               />
-              <path
-                d="M 416 328 Q 438 324 462 328"
-                stroke="#98674E"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                fill="none"
-              />
 
               {/* ------------------------------------------ */}
-              {/* RIGHT EYE SOCKET INTERIOR                  */}
+              {/* RIGHT EYE PUPIL (Smooth Real-Time Tracking)*/}
               {/* ------------------------------------------ */}
-              <g clipPath="url(#officialRightEyeClip)">
-                {/* Clean Sclera Base Fill */}
-                <rect x="545" y="320" width="80" height="32" fill="#FAF6F2" />
-
-                {/* Upper eyelid soft shadow */}
-                <path
-                  d="M 552 338 Q 584 327 618 338 L 618 331 L 552 331 Z"
-                  fill="#CFBEB4"
-                  opacity="0.65"
-                />
-
-                {/* RIGHT PUPIL (Real-Time Physics Cursor Tracking) */}
+              <g clipPath="url(#socketClipRight)">
                 <motion.g
                   animate={{
                     x: pupilX,
@@ -220,116 +187,60 @@ export const OfficialCharacterRig: React.FC = () => {
                   }}
                   transition={{
                     type: 'spring',
-                    stiffness: 420,
-                    damping: 26,
-                    mass: 0.15,
+                    stiffness: 450,
+                    damping: 28,
+                    mass: 0.12,
                   }}
                 >
                   <image
-                    href="/assets/character/navin-pupil-sprite.png"
-                    x="569"
-                    y="323"
-                    width="28"
-                    height="28"
+                    href="/assets/character/navin-iris-right-clean.png"
+                    x="570"
+                    y="328"
+                    width="22"
+                    height="16"
                   />
                 </motion.g>
 
-                {/* RIGHT UPPER EYELID DROP CURTAIN */}
-                <motion.path
-                  d="M 545 310 L 630 310 L 630 348 L 545 348 Z"
-                  fill="#E5A885"
+                {/* Right Eyelid Drop Curtain (ONLY VISIBLE ON BLINK/SLEEP/BORED) */}
+                <motion.g
+                  initial={{ opacity: 0 }}
                   animate={{
-                    y: eyelidClosedFraction * 24 - 24,
+                    opacity: isEyelidClosed ? 1 : isBored ? 0.75 : 0,
+                    y: isEyelidClosed ? 0 : isBored ? -6 : -25,
                   }}
                   transition={{
-                    duration: isBlinking ? 0.08 : 0.22,
+                    duration: isBlinking ? 0.08 : 0.2,
                     ease: 'easeInOut',
                   }}
-                />
+                >
+                  <path
+                    d="M 545 315 L 625 315 L 625 348 L 545 348 Z"
+                    fill="#E5A885"
+                  />
+                  {/* Closed Eyelash Line */}
+                  <path
+                    d="M 550 338 Q 582 343 614 338"
+                    stroke="#140E0D"
+                    strokeWidth="4.2"
+                    strokeLinecap="round"
+                    fill="none"
+                  />
+                </motion.g>
               </g>
 
-              {/* Right Eyelash Definition Line */}
+              {/* Right Eyelash Upper Contour (Crisp & Dark) */}
               <path
-                d="M 551 337 Q 584 326 619 338"
+                d="M 551 337 Q 582 326 613 338"
                 stroke="#140E0D"
                 strokeWidth="4.2"
                 strokeLinecap="round"
                 fill="none"
               />
-              <path
-                d="M 562 328 Q 584 324 608 328"
-                stroke="#98674E"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                fill="none"
-              />
 
               {/* ------------------------------------------ */}
-              {/* LEFT EYEBROW (Dynamic Morph & Tilt)        */}
+              {/* ANIME EMOTION ACCENTS (Playful & Reactive) */}
               {/* ------------------------------------------ */}
-              <motion.g
-                animate={{
-                  y: browLeft.y,
-                  rotate: browLeft.rotate,
-                }}
-                transition={{
-                  type: 'spring',
-                  stiffness: 320,
-                  damping: 20,
-                }}
-                style={{
-                  transformOrigin: '436px 306px',
-                }}
-              >
-                <image
-                  href="/assets/character/navin-brow-left-clean.png"
-                  x="378"
-                  y="284"
-                  width="116"
-                  height="44"
-                />
-              </motion.g>
-
-              {/* ------------------------------------------ */}
-              {/* RIGHT EYEBROW (Dynamic Morph & Tilt)       */}
-              {/* ------------------------------------------ */}
-              <motion.g
-                animate={{
-                  y: browRight.y,
-                  rotate: browRight.rotate,
-                }}
-                transition={{
-                  type: 'spring',
-                  stiffness: 320,
-                  damping: 20,
-                }}
-                style={{
-                  transformOrigin: '584px 306px',
-                }}
-              >
-                <image
-                  href="/assets/character/navin-brow-right-clean.png"
-                  x="526"
-                  y="284"
-                  width="116"
-                  height="44"
-                />
-              </motion.g>
-
-              {/* ------------------------------------------ */}
-              {/* DYNAMIC MOUTH MORPH OVERLAY                */}
-              {/* ------------------------------------------ */}
-              <motion.path
-                d={getMouthD()}
-                fill={mouthState === 'smile' ? '#9E3224' : mouthState === 'open' ? '#3B1510' : 'none'}
-                stroke="#171717"
-                strokeWidth={mouthState === 'open' ? '3.5' : '3.8'}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                transition={{ duration: 0.18, ease: 'easeOut' }}
-              />
-
-              {/* Anime Emotion Accents (Angry Vein Mark) */}
+              {/* Angry Vein Mark (Only when poked 6+ times) */}
               {expression === 'angry' && (
                 <motion.g
                   initial={{ scale: 0 }}
@@ -367,7 +278,7 @@ export const OfficialCharacterRig: React.FC = () => {
               )}
 
               {/* Sleeping / Bored Zzz Accent */}
-              {(expression === 'bored' || expression === 'sleeping') && (
+              {(isBored || isSleeping) && (
                 <motion.g
                   animate={{ y: [-5, -35], opacity: [0, 1, 0], x: [0, 14] }}
                   transition={{ duration: 2.2, repeat: Infinity, ease: 'easeOut' }}
