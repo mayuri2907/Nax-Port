@@ -130,6 +130,23 @@ export function useOfficialCharacterRig(): OfficialCharacterRigState {
     return () => clearTimeout(timer);
   }, []);
 
+  // Listen for intro completion to trigger welcoming reaction
+  useEffect(() => {
+    const onIntroFinish = () => {
+      setExpression('happy');
+      soundManager.playCharacterReact('happy');
+      triggerSpeech("Hey! Welcome to my world. Let's build something epic! ✨", 3800);
+      setTimeout(() => {
+        setExpression((curr) => (curr === 'happy' ? 'idle' : curr));
+      }, 2800);
+    };
+
+    window.addEventListener('navin-intro-finish', onIntroFinish);
+    return () => {
+      window.removeEventListener('navin-intro-finish', onIntroFinish);
+    };
+  }, [triggerSpeech]);
+
   // Inactivity tracking
   const resetInactivity = useCallback(() => {
     if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
