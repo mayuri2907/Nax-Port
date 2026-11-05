@@ -61,8 +61,8 @@ export const OfficialCharacterRig: React.FC = () => {
         }}
         transition={{
           type: 'spring',
-          stiffness: 320,
-          damping: 24,
+          stiffness: 300,
+          damping: 22,
           mass: 0.15,
         }}
         style={{
@@ -85,19 +85,6 @@ export const OfficialCharacterRig: React.FC = () => {
             <clipPath id="socketClipRight">
               <path d="M 556 334 C 568 327, 598 327, 610 335 C 598 340, 568 340, 556 334 Z" />
             </clipPath>
-
-            {/* Natural Sclera Gradient with Eyelid Shadow */}
-            <linearGradient id="scleraGradLeft" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#D5CDC6" />
-              <stop offset="35%" stopColor="#EAE4DE" />
-              <stop offset="100%" stopColor="#FAF7F4" />
-            </linearGradient>
-
-            <linearGradient id="scleraGradRight" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#D5CDC6" />
-              <stop offset="35%" stopColor="#EAE4DE" />
-              <stop offset="100%" stopColor="#FAF7F4" />
-            </linearGradient>
           </defs>
 
           {/* ========================================== */}
@@ -115,7 +102,7 @@ export const OfficialCharacterRig: React.FC = () => {
           >
             {/* BASE OFFICIAL ILLUSTRATION (Pristine original artwork) */}
             <image
-              href="/assets/character/navin-base-sclera.png"
+              href="/assets/character/navin-official.png"
               x="0"
               y="0"
               width="1024"
@@ -131,32 +118,25 @@ export const OfficialCharacterRig: React.FC = () => {
             {/* LEFT EYE PUPIL (Smooth Real-Time Tracking) */}
             {/* ------------------------------------------ */}
             <g clipPath="url(#socketClipLeft)">
-              {/* Natural anatomical sclera base (strictly contained within the eye socket) */}
-              <path
-                d="M 412 334 C 424 327, 456 327, 468 335 C 456 342, 424 342, 412 334 Z"
-                fill="url(#scleraGradLeft)"
-              />
-
+              {/* Dynamic pupil core & specular catchlight tracking across iris */}
               <motion.g
                 animate={{
                   x: pupilX,
                   y: pupilY,
-                  scale: expression === 'surprised' ? 1.08 : 1.0,
+                  scale: expression === 'surprised' ? 1.15 : 1.0,
                 }}
                 transition={{
                   type: 'spring',
-                  stiffness: 480,
-                  damping: 26,
+                  stiffness: 420,
+                  damping: 24,
                   mass: 0.1,
                 }}
               >
-                <image
-                  href="/assets/character/navin-iris-left-clean.png"
-                  x="424"
-                  y="326"
-                  width="36"
-                  height="16"
-                />
+                {/* Deep dark pupil center that tracks cursor */}
+                <ellipse cx="442" cy="334" rx="7" ry="6" fill="#120A07" opacity="0.45" />
+                {/* Specular catchlight reflections following gaze */}
+                <circle cx="436" cy="331" r="2.8" fill="#FFFFFF" opacity="0.95" />
+                <circle cx="448" cy="332" r="1.8" fill="#FFFFFF" opacity="0.9" />
               </motion.g>
 
               {/* Left Eyelid Drop Curtain (Natural skin closure, NO harsh synthetic black lines) */}
@@ -217,32 +197,25 @@ export const OfficialCharacterRig: React.FC = () => {
             {/* RIGHT EYE PUPIL (Smooth Real-Time Tracking)*/}
             {/* ------------------------------------------ */}
             <g clipPath="url(#socketClipRight)">
-              {/* Natural anatomical sclera base (strictly contained within the eye socket) */}
-              <path
-                d="M 556 334 C 568 327, 598 327, 610 335 C 598 340, 568 340, 556 334 Z"
-                fill="url(#scleraGradRight)"
-              />
-
+              {/* Dynamic pupil core & specular catchlight tracking across iris */}
               <motion.g
                 animate={{
                   x: pupilX,
                   y: pupilY,
-                  scale: expression === 'surprised' ? 1.08 : 1.0,
+                  scale: expression === 'surprised' ? 1.15 : 1.0,
                 }}
                 transition={{
                   type: 'spring',
-                  stiffness: 480,
-                  damping: 26,
+                  stiffness: 420,
+                  damping: 24,
                   mass: 0.1,
                 }}
               >
-                <image
-                  href="/assets/character/navin-iris-right-clean.png"
-                  x="566"
-                  y="326"
-                  width="36"
-                  height="15"
-                />
+                {/* Deep dark pupil center that tracks cursor */}
+                <ellipse cx="584" cy="334" rx="7" ry="6" fill="#120A07" opacity="0.45" />
+                {/* Specular catchlight reflections following gaze */}
+                <circle cx="578" cy="331" r="2.8" fill="#FFFFFF" opacity="0.95" />
+                <circle cx="590" cy="332" r="1.8" fill="#FFFFFF" opacity="0.9" />
               </motion.g>
 
               {/* Right Eyelid Drop Curtain (Natural skin closure, NO harsh synthetic black lines) */}

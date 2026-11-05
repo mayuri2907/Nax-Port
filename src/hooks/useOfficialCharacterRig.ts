@@ -193,24 +193,22 @@ export function useOfficialCharacterRig(): OfficialCharacterRigState {
       const deltaY = e.clientY - centerY;
 
       // Normalization relative to responsive interaction radius
-      const reachX = Math.min(window.innerWidth * 0.36, 420);
-      const reachY = Math.min(window.innerHeight * 0.36, 320);
+      const reachX = Math.min(window.innerWidth * 0.4, 450);
+      const reachY = Math.min(window.innerHeight * 0.4, 350);
 
       const normX = Math.max(-1, Math.min(1, deltaX / reachX));
       const normY = Math.max(-1, Math.min(1, deltaY / reachY));
 
-      // Pupil travel in SVG units:
-      // In 1024x935 coordinate space, socket width is 56px, iris is 36px.
-      // -8.5 to +8.5 gives an immediate, unmistakable, alive tracking motion!
-      const targetPupilX = normX * 8.5;
-      const targetPupilY = normY * 2.8;
+      // Pupil travel in SVG units (-4.2px to +4.2px X, -1.8px to +1.8px Y)
+      const targetPupilX = normX * 4.2;
+      const targetPupilY = normY * 1.8;
 
       setPupilX(targetPupilX);
       setPupilY(targetPupilY);
 
-      // 3D perspective head rotation on container (-6.5deg to +6.5deg)
-      const targetRotY = normX * 6.5;
-      const targetRotX = -normY * 4.2;
+      // 3D perspective head rotation on container (-7.5deg to +7.5deg)
+      const targetRotY = normX * 7.5;
+      const targetRotX = -normY * 5.0;
 
       setHeadRotateY(targetRotY);
       setHeadRotateX(targetRotX);
