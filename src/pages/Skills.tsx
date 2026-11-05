@@ -157,3 +157,4 @@ export const Skills: React.FC = () => {
     </PageTransition>
   );
 };
+

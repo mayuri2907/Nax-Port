@@ -263,3 +263,4 @@ export const About: React.FC = () => {
     </PageTransition>
   );
 };
+

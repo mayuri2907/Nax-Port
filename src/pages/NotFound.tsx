@@ -38,3 +38,4 @@ export const NotFound: React.FC = () => {
     </PageTransition>
   );
 };
+
