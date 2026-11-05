@@ -15,10 +15,10 @@ export type CharacterExpression =
 
 export interface OfficialCharacterRigState {
   expression: CharacterExpression;
-  pupilX: number; // clamped px offset (-3.5 to 3.5)
-  pupilY: number; // clamped px offset (-2.0 to 2.0)
-  headRotateX: number; // degrees (-3.5 to 3.5)
-  headRotateY: number; // degrees (-4.5 to 4.5)
+  pupilX: number; // SVG px offset (-8.5 to 8.5)
+  pupilY: number; // SVG px offset (-2.8 to 2.8)
+  headRotateX: number; // 3D tilt degrees (-4.5 to 4.5)
+  headRotateY: number; // 3D tilt degrees (-6.5 to 6.5)
   isBlinking: boolean;
   isSleeping: boolean;
   isBored: boolean;
@@ -46,7 +46,7 @@ export const DIALOGUE_MAP: Record<CharacterExpression, string[]> = {
     "Taking a closer look?"
   ],
   happy: [
-    "Glad you're here! Let's build something epic.",
+    "Glad you're here! Let's build something epic! ✨",
     "Turning complex systems into clean software.",
     "Clean code, seamless animations, zero compromise."
   ],
@@ -61,14 +61,14 @@ export const DIALOGUE_MAP: Record<CharacterExpression, string[]> = {
     "What shall we build next?"
   ],
   annoyed: [
-    "Hey, that's quite a few clicks!",
+    "Hey, easy on the mouse button! ☕",
     "Poking developers usually requires coffee first.",
-    "Easy on the mouse button, friend!"
+    "Careful, you might trigger a stack overflow!"
   ],
   angry: [
     "Okay, that's enough poking for now! 💢",
     "Patience buffer temporarily exceeded!",
-    "Time out! Let me breathe."
+    "Time out! Let me get back to coding."
   ],
   bored: [
     "Still there? *yawns*",
@@ -99,8 +99,8 @@ export function useOfficialCharacterRig(): OfficialCharacterRigState {
   const speechTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isHoveredRef = useRef<boolean>(false);
 
-  // Trigger gentle thought bubble without debug UI
-  const triggerSpeech = useCallback((text: string, durationMs: number = 3000) => {
+  // Trigger speech bubble
+  const triggerSpeech = useCallback((text: string, durationMs: number = 3200) => {
     if (speechTimerRef.current) clearTimeout(speechTimerRef.current);
     setSpeechMessage(text);
     speechTimerRef.current = setTimeout(() => {
@@ -167,7 +167,7 @@ export function useOfficialCharacterRig(): OfficialCharacterRigState {
         }
         return prev;
       });
-    }, 15000);
+    }, 16000);
 
     sleepTimerRef.current = setTimeout(() => {
       setExpression((prev) => {
@@ -176,7 +176,7 @@ export function useOfficialCharacterRig(): OfficialCharacterRigState {
         }
         return prev;
       });
-    }, 32000);
+    }, 34000);
   }, [triggerSpeech]);
 
   // Real-Time Mouse Tracking
@@ -192,20 +192,25 @@ export function useOfficialCharacterRig(): OfficialCharacterRigState {
       const deltaX = e.clientX - centerX;
       const deltaY = e.clientY - centerY;
 
-      // Normalization relative to window
-      const normX = deltaX / (window.innerWidth * 0.45);
-      const normY = deltaY / (window.innerHeight * 0.45);
+      // Normalization relative to responsive interaction radius
+      const reachX = Math.min(window.innerWidth * 0.36, 420);
+      const reachY = Math.min(window.innerHeight * 0.36, 320);
 
-      // Clamp pupil travel within realistic, subtle limits (-3.5px to +3.5px X, -1.6px to +1.6px Y)
-      const targetPupilX = Math.max(-3.5, Math.min(3.5, normX * 3.5));
-      const targetPupilY = Math.max(-1.6, Math.min(1.6, normY * 1.6));
+      const normX = Math.max(-1, Math.min(1, deltaX / reachX));
+      const normY = Math.max(-1, Math.min(1, deltaY / reachY));
+
+      // Pupil travel in SVG units:
+      // In 1024x935 coordinate space, socket width is 56px, iris is 36px.
+      // -8.5 to +8.5 gives an immediate, unmistakable, alive tracking motion!
+      const targetPupilX = normX * 8.5;
+      const targetPupilY = normY * 2.8;
 
       setPupilX(targetPupilX);
       setPupilY(targetPupilY);
 
-      // Subtle 3D perspective head rotation (-3.8deg to +3.8deg)
-      const targetRotY = Math.max(-3.8, Math.min(3.8, normX * 3.8));
-      const targetRotX = Math.max(-2.8, Math.min(2.8, -normY * 2.8));
+      // 3D perspective head rotation on container (-6.5deg to +6.5deg)
+      const targetRotY = normX * 6.5;
+      const targetRotX = -normY * 4.2;
 
       setHeadRotateY(targetRotY);
       setHeadRotateX(targetRotX);
@@ -256,27 +261,27 @@ export function useOfficialCharacterRig(): OfficialCharacterRigState {
     clickDecayRef.current = setTimeout(() => {
       clickCountRef.current = 0;
       setExpression('idle');
-    }, 2800);
+    }, 3200);
 
     if (clicks >= 6) {
       setExpression('angry');
       soundManager.playCharacterReact('angry');
-      triggerSpeech(DIALOGUE_MAP.angry[0]);
+      triggerSpeech(DIALOGUE_MAP.angry[Math.floor(Math.random() * DIALOGUE_MAP.angry.length)]);
     } else if (clicks >= 3) {
       setExpression('annoyed');
       soundManager.playCharacterReact('annoyed');
-      triggerSpeech(DIALOGUE_MAP.annoyed[0]);
+      triggerSpeech(DIALOGUE_MAP.annoyed[Math.floor(Math.random() * DIALOGUE_MAP.annoyed.length)]);
     } else if (clicks === 2) {
       setExpression('happy');
       soundManager.playCharacterReact('happy');
-      triggerSpeech(DIALOGUE_MAP.happy[0]);
+      triggerSpeech(DIALOGUE_MAP.happy[Math.floor(Math.random() * DIALOGUE_MAP.happy.length)]);
     } else {
       setExpression('surprised');
       soundManager.playCharacterReact('surprised');
-      triggerSpeech(DIALOGUE_MAP.surprised[0]);
+      triggerSpeech(DIALOGUE_MAP.surprised[Math.floor(Math.random() * DIALOGUE_MAP.surprised.length)]);
       setTimeout(() => {
         setExpression((curr) => (curr === 'surprised' ? (isHoveredRef.current ? 'curious' : 'idle') : curr));
-      }, 1500);
+      }, 1800);
     }
   }, [resetInactivity, triggerSpeech]);
 

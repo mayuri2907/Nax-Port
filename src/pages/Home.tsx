@@ -179,7 +179,7 @@ export const Home: React.FC = () => {
             </div>
 
             {/* Right Column: Real-Time Animated Character Rig (5 cols) */}
-            <div className="lg:col-span-5 flex flex-col items-center justify-center relative">
+            <div className="lg:col-span-5 flex flex-col items-center justify-center relative overflow-visible">
               <CharacterStage />
             </div>
 

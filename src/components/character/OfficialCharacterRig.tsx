@@ -23,20 +23,21 @@ export const OfficialCharacterRig: React.FC = () => {
   const isEyelidClosed = isBlinking || isSleeping;
 
   return (
-    <div className="relative flex flex-col items-center select-none">
+    <div className="relative flex flex-col items-center select-none overflow-visible">
       
-      {/* Speech / Dialogue Bubble (Appears only on user interaction or state change) */}
+      {/* Speech / Dialogue Bubble (Appears above character on interaction) */}
       <AnimatePresence>
         {speechMessage && (
           <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            initial={{ opacity: 0, y: 15, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -6, scale: 0.95 }}
-            transition={{ duration: 0.2 }}
-            className="absolute -top-14 z-30 px-4 py-2 bg-white text-ink-primary border-2 border-ink-primary shadow-brutal rounded-2xl text-xs md:text-sm font-grotesk font-semibold text-center max-w-xs pointer-events-none"
+            exit={{ opacity: 0, y: -8, scale: 0.9 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 26 }}
+            className="absolute -top-14 sm:-top-16 z-40 px-4 py-2 bg-white text-ink-primary border-2 border-ink-primary shadow-brutal rounded-2xl text-xs md:text-sm font-grotesk font-bold text-center max-w-xs pointer-events-none"
           >
             <div className="flex items-center justify-center gap-1.5">
               {expression === 'angry' && <span className="text-red-500 font-bold">💢</span>}
+              {expression === 'annoyed' && <span>💧</span>}
               {expression === 'happy' && <Sparkles className="w-3.5 h-3.5 text-accent-orange" />}
               <span>{speechMessage}</span>
             </div>
@@ -46,17 +47,29 @@ export const OfficialCharacterRig: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* Main Single Continuous Rigged Character Canvas */}
-      <div
+      {/* Main Single Continuous Rigged Character Canvas with 3D Tilt */}
+      <motion.div
         ref={containerRef}
         onClick={handleCharacterClick}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         data-cursor="hover"
-        className="relative w-80 h-[330px] sm:w-96 sm:h-[395px] md:w-[440px] md:h-[430px] lg:w-[480px] lg:h-[470px] cursor-pointer group"
-        style={{
-          perspective: 1000,
+        animate={{
+          rotateX: headRotateX,
+          rotateY: headRotateY,
+          x: expression === 'angry' ? [-2, 2, -2, 2, 0] : 0,
         }}
+        transition={{
+          type: 'spring',
+          stiffness: 320,
+          damping: 24,
+          mass: 0.15,
+        }}
+        style={{
+          perspective: 1200,
+          transformStyle: 'preserve-3d',
+        }}
+        className="relative w-80 h-[330px] sm:w-96 sm:h-[395px] md:w-[440px] md:h-[430px] lg:w-[480px] lg:h-[470px] cursor-pointer group"
       >
         <svg
           viewBox="0 0 1024 935"
@@ -98,210 +111,284 @@ export const OfficialCharacterRig: React.FC = () => {
             />
 
             {/* ========================================== */}
-            {/* HEAD GROUP (Real-Time 3D Cursor Perspective) */}
+            {/* REAL-TIME EYE TRACKING & EXPRESSIONS */}
             {/* ========================================== */}
-            <motion.g
-              animate={{
-                rotateX: headRotateX,
-                rotateY: headRotateY,
-              }}
-              transition={{
-                type: 'spring',
-                stiffness: 300,
-                damping: 24,
-                mass: 0.2,
-              }}
-              style={{
-                transformOrigin: '512px 420px',
-              }}
-            >
-              {/* ------------------------------------------ */}
-              {/* LEFT EYE PUPIL (Smooth Real-Time Tracking) */}
-              {/* ------------------------------------------ */}
-              <g clipPath="url(#socketClipLeft)">
-                <motion.g
-                  animate={{
-                    x: pupilX,
-                    y: pupilY,
-                  }}
-                  transition={{
-                    type: 'spring',
-                    stiffness: 450,
-                    damping: 28,
-                    mass: 0.12,
-                  }}
-                >
-                  <image
-                    href="/assets/character/navin-iris-left-clean.png"
-                    x="424"
-                    y="326"
-                    width="36"
-                    height="16"
-                  />
-                </motion.g>
 
-                {/* Left Eyelid Drop Curtain (Natural skin closure, NO harsh synthetic black lines) */}
-                <motion.g
-                  initial={{ opacity: 0 }}
-                  animate={{
-                    opacity: isEyelidClosed ? 1 : isBored ? 0.6 : 0,
-                    y: isEyelidClosed ? 0 : isBored ? -8 : -22,
-                  }}
-                  transition={{
-                    duration: isBlinking ? 0.08 : 0.22,
-                    ease: 'easeInOut',
-                  }}
-                >
+            {/* ------------------------------------------ */}
+            {/* LEFT EYE PUPIL (Smooth Real-Time Tracking) */}
+            {/* ------------------------------------------ */}
+            <g clipPath="url(#socketClipLeft)">
+              <motion.g
+                animate={{
+                  x: pupilX,
+                  y: pupilY,
+                  scale: expression === 'surprised' ? 1.08 : 1.0,
+                }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 480,
+                  damping: 26,
+                  mass: 0.1,
+                }}
+              >
+                <image
+                  href="/assets/character/navin-iris-left-clean.png"
+                  x="424"
+                  y="326"
+                  width="36"
+                  height="16"
+                />
+              </motion.g>
+
+              {/* Left Eyelid Drop Curtain (Natural skin closure, NO harsh synthetic black lines) */}
+              <motion.g
+                initial={{ opacity: 0 }}
+                animate={{
+                  opacity: isEyelidClosed
+                    ? 1
+                    : expression === 'happy'
+                    ? 0.95
+                    : expression === 'angry'
+                    ? 0.7
+                    : expression === 'annoyed'
+                    ? 0.55
+                    : isBored
+                    ? 0.55
+                    : 0,
+                  y: isEyelidClosed
+                    ? 0
+                    : expression === 'happy'
+                    ? -2
+                    : expression === 'angry'
+                    ? -7
+                    : expression === 'annoyed'
+                    ? -9
+                    : isBored
+                    ? -9
+                    : -24,
+                }}
+                transition={{
+                  duration: isBlinking ? 0.08 : 0.2,
+                  ease: 'easeInOut',
+                }}
+              >
+                <path
+                  d="M 405 320 L 475 320 L 475 344 L 405 344 Z"
+                  fill="#DFAC8D"
+                />
+                {/* Soft natural closed lash crease (visible ONLY during complete blink or happy smile) */}
+                {(isEyelidClosed || expression === 'happy') && (
                   <path
-                    d="M 405 320 L 475 320 L 475 344 L 405 344 Z"
-                    fill="#DFAC8D"
-                  />
-                  {/* Delicate soft natural closed lash crease (visible ONLY when eye is fully closed) */}
-                  {isEyelidClosed && (
-                    <path
-                      d="M 416 337 Q 440 341 464 337"
-                      stroke="#342018"
-                      strokeWidth="1.8"
-                      strokeLinecap="round"
-                      fill="none"
-                      opacity={0.85}
-                    />
-                  )}
-                </motion.g>
-              </g>
-
-              {/* ------------------------------------------ */}
-              {/* RIGHT EYE PUPIL (Smooth Real-Time Tracking)*/}
-              {/* ------------------------------------------ */}
-              <g clipPath="url(#socketClipRight)">
-                <motion.g
-                  animate={{
-                    x: pupilX,
-                    y: pupilY,
-                  }}
-                  transition={{
-                    type: 'spring',
-                    stiffness: 450,
-                    damping: 28,
-                    mass: 0.12,
-                  }}
-                >
-                  <image
-                    href="/assets/character/navin-iris-right-clean.png"
-                    x="566"
-                    y="326"
-                    width="36"
-                    height="15"
-                  />
-                </motion.g>
-
-                {/* Right Eyelid Drop Curtain (Natural skin closure, NO harsh synthetic black lines) */}
-                <motion.g
-                  initial={{ opacity: 0 }}
-                  animate={{
-                    opacity: isEyelidClosed ? 1 : isBored ? 0.6 : 0,
-                    y: isEyelidClosed ? 0 : isBored ? -8 : -22,
-                  }}
-                  transition={{
-                    duration: isBlinking ? 0.08 : 0.22,
-                    ease: 'easeInOut',
-                  }}
-                >
-                  <path
-                    d="M 550 320 L 620 320 L 620 344 L 550 344 Z"
-                    fill="#DFAC8D"
-                  />
-                  {/* Delicate soft natural closed lash crease (visible ONLY when eye is fully closed) */}
-                  {isEyelidClosed && (
-                    <path
-                      d="M 558 337 Q 582 340 606 337"
-                      stroke="#342018"
-                      strokeWidth="1.8"
-                      strokeLinecap="round"
-                      fill="none"
-                      opacity={0.85}
-                    />
-                  )}
-                </motion.g>
-              </g>
-
-              {/* ------------------------------------------ */}
-              {/* FOREGROUND NATURAL EYELASHES & EYELID LAYER */}
-              {/* Irises glide naturally behind the authentic hand-drawn eyelashes */}
-              {/* ------------------------------------------ */}
-              <image
-                href="/assets/character/navin-eye-frame.png"
-                x="0"
-                y="0"
-                width="1024"
-                height="935"
-                preserveAspectRatio="xMidYMid meet"
-                className="pointer-events-none"
-              />
-
-              {/* ------------------------------------------ */}
-              {/* ANIME EMOTION ACCENTS (Playful & Reactive) */}
-              {/* ------------------------------------------ */}
-              {/* Angry Vein Mark (Only when poked 6+ times) */}
-              {expression === 'angry' && (
-                <motion.g
-                  initial={{ scale: 0 }}
-                  animate={{ scale: [1, 1.25, 1], rotate: [0, 8, -6, 0] }}
-                  transition={{ repeat: Infinity, duration: 0.6 }}
-                  transform="translate(685, 230)"
-                >
-                  <path
-                    d="M -9 -18 L -9 18 M -18 -9 L 18 -9 M 9 -18 L 9 18 M -18 9 L 18 9"
-                    stroke="#E63946"
-                    strokeWidth="4.5"
+                    d={
+                      expression === 'happy'
+                        ? 'M 414 338 Q 440 334 466 338' // Happy anime crescent smile
+                        : 'M 416 337 Q 440 341 464 337' // Closed relaxing eyelid
+                    }
+                    stroke="#342018"
+                    strokeWidth="1.8"
                     strokeLinecap="round"
+                    fill="none"
+                    opacity={0.85}
+                  />
+                )}
+              </motion.g>
+            </g>
+
+            {/* ------------------------------------------ */}
+            {/* RIGHT EYE PUPIL (Smooth Real-Time Tracking)*/}
+            {/* ------------------------------------------ */}
+            <g clipPath="url(#socketClipRight)">
+              <motion.g
+                animate={{
+                  x: pupilX,
+                  y: pupilY,
+                  scale: expression === 'surprised' ? 1.08 : 1.0,
+                }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 480,
+                  damping: 26,
+                  mass: 0.1,
+                }}
+              >
+                <image
+                  href="/assets/character/navin-iris-right-clean.png"
+                  x="566"
+                  y="326"
+                  width="36"
+                  height="15"
+                />
+              </motion.g>
+
+              {/* Right Eyelid Drop Curtain (Natural skin closure, NO harsh synthetic black lines) */}
+              <motion.g
+                initial={{ opacity: 0 }}
+                animate={{
+                  opacity: isEyelidClosed
+                    ? 1
+                    : expression === 'happy'
+                    ? 0.95
+                    : expression === 'angry'
+                    ? 0.7
+                    : expression === 'annoyed'
+                    ? 0.55
+                    : isBored
+                    ? 0.55
+                    : 0,
+                  y: isEyelidClosed
+                    ? 0
+                    : expression === 'happy'
+                    ? -2
+                    : expression === 'angry'
+                    ? -7
+                    : expression === 'annoyed'
+                    ? -9
+                    : isBored
+                    ? -9
+                    : -24,
+                }}
+                transition={{
+                  duration: isBlinking ? 0.08 : 0.2,
+                  ease: 'easeInOut',
+                }}
+              >
+                <path
+                  d="M 550 320 L 620 320 L 620 344 L 550 344 Z"
+                  fill="#DFAC8D"
+                />
+                {(isEyelidClosed || expression === 'happy') && (
+                  <path
+                    d={
+                      expression === 'happy'
+                        ? 'M 556 338 Q 582 334 608 338' // Happy anime crescent smile
+                        : 'M 558 337 Q 582 340 606 337' // Closed relaxing eyelid
+                    }
+                    stroke="#342018"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    fill="none"
+                    opacity={0.85}
+                  />
+                )}
+              </motion.g>
+            </g>
+
+            {/* ------------------------------------------ */}
+            {/* ANIME EMOTION ACCENTS (Playful & Reactive) */}
+            {/* ------------------------------------------ */}
+            
+            {/* Angry Vein Mark (6+ clicks) */}
+            {expression === 'angry' && (
+              <motion.g
+                initial={{ scale: 0 }}
+                animate={{ scale: [1, 1.25, 1], rotate: [0, 8, -6, 0] }}
+                transition={{ repeat: Infinity, duration: 0.5 }}
+                transform="translate(685, 230)"
+              >
+                <path
+                  d="M -9 -18 L -9 18 M -18 -9 L 18 -9 M 9 -18 L 9 18 M -18 9 L 18 9"
+                  stroke="#E63946"
+                  strokeWidth="4.5"
+                  strokeLinecap="round"
+                />
+              </motion.g>
+            )}
+
+            {/* Annoyed Anime Sweat Drop (3+ clicks) */}
+            {expression === 'annoyed' && (
+              <motion.g
+                initial={{ scale: 0, y: -10 }}
+                animate={{ scale: [1, 1.15, 1], y: [0, 4, 0] }}
+                transition={{ repeat: Infinity, duration: 1.2 }}
+                transform="translate(680, 220)"
+              >
+                {/* Large vibrant anime sweat drop */}
+                <path
+                  d="M 0 -18 C -10 -4, -12 8, 0 16 C 12 8, 10 -4, 0 -18 Z"
+                  fill="#38BDF8"
+                  stroke="#0284C7"
+                  strokeWidth="2.5"
+                />
+                {/* Specular highlight */}
+                <ellipse cx="-3" cy="6" rx="2.5" ry="4" fill="white" opacity="0.8" />
+              </motion.g>
+            )}
+
+            {/* Surprised Exclamation Accent */}
+            {expression === 'surprised' && (
+              <motion.g
+                initial={{ scale: 0, y: 15 }}
+                animate={{ scale: [1, 1.2, 1], y: [0, -6, 0] }}
+                transition={{ duration: 0.4 }}
+                transform="translate(685, 240)"
+              >
+                <text
+                  x="0"
+                  y="0"
+                  fontSize="46"
+                  fontWeight="900"
+                  fill="#F47B35"
+                  fontFamily="'Space Grotesk', sans-serif"
+                >
+                  !
+                </text>
+              </motion.g>
+            )}
+
+            {/* Happy Sparkle Stars (2 clicks) */}
+            {expression === 'happy' && (
+              <>
+                <motion.g
+                  initial={{ scale: 0, rotate: -30 }}
+                  animate={{ scale: [1, 1.3, 1], rotate: [0, 45, 0] }}
+                  transition={{ repeat: Infinity, duration: 0.8 }}
+                  transform="translate(340, 250)"
+                >
+                  <polygon
+                    points="0,-16 4,-4 16,0 4,4 0,16 -4,4 -16,0 -4,-4"
+                    fill="#FBBF24"
+                    stroke="#D97706"
+                    strokeWidth="1.5"
                   />
                 </motion.g>
-              )}
-
-              {/* Surprised Exclamation Accent */}
-              {expression === 'surprised' && (
                 <motion.g
-                  initial={{ scale: 0, y: 15 }}
-                  animate={{ scale: 1, y: 0 }}
-                  transform="translate(690, 240)"
+                  initial={{ scale: 0, rotate: 30 }}
+                  animate={{ scale: [1, 1.3, 1], rotate: [0, -45, 0] }}
+                  transition={{ repeat: Infinity, duration: 0.8, delay: 0.2 }}
+                  transform="translate(685, 245)"
                 >
-                  <text
-                    x="0"
-                    y="0"
-                    fontSize="42"
-                    fontWeight="900"
-                    fill="#F47B35"
-                    fontFamily="'Space Grotesk', sans-serif"
-                  >
-                    !
-                  </text>
+                  <polygon
+                    points="0,-16 4,-4 16,0 4,4 0,16 -4,4 -16,0 -4,-4"
+                    fill="#FBBF24"
+                    stroke="#D97706"
+                    strokeWidth="1.5"
+                  />
                 </motion.g>
-              )}
+              </>
+            )}
 
-              {/* Sleeping / Bored Zzz Accent */}
-              {(isBored || isSleeping) && (
-                <motion.g
-                  animate={{ y: [-5, -35], opacity: [0, 1, 0], x: [0, 14] }}
-                  transition={{ duration: 2.2, repeat: Infinity, ease: 'easeOut' }}
-                  transform="translate(685, 230)"
+            {/* Sleeping / Bored Zzz Accent */}
+            {(isBored || isSleeping) && (
+              <motion.g
+                animate={{ y: [-5, -35], opacity: [0, 1, 0], x: [0, 14] }}
+                transition={{ duration: 2.2, repeat: Infinity, ease: 'easeOut' }}
+                transform="translate(685, 230)"
+              >
+                <text
+                  x="0"
+                  y="0"
+                  fontSize="28"
+                  fontWeight="bold"
+                  fill="#77736C"
+                  fontFamily="'Space Grotesk', sans-serif"
                 >
-                  <text
-                    x="0"
-                    y="0"
-                    fontSize="26"
-                    fontWeight="bold"
-                    fill="#77736C"
-                    fontFamily="'Space Grotesk', sans-serif"
-                  >
-                    z z Z
-                  </text>
-                </motion.g>
-              )}
-            </motion.g>
+                  z z Z
+                </text>
+              </motion.g>
+            )}
           </motion.g>
         </svg>
-      </div>
+      </motion.div>
 
     </div>
   );
