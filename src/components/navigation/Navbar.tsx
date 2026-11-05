@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { soundManager } from '../../utils/audio';
 import { Volume2, VolumeX, Menu, X, ArrowUpRight, Sparkles } from 'lucide-react';
@@ -9,10 +10,11 @@ export const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [isMuted, setIsMuted] = useState<boolean>(soundManager.getMuted());
   const [currentTime, setCurrentTime] = useState<string>('');
+  const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 40);
+      setIsScrolled(window.scrollY > 30);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -39,44 +41,46 @@ export const Navbar: React.FC = () => {
     };
   }, []);
 
+  // Close mobile drawer on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
+
   const handleToggleSound = () => {
     const nextState = soundManager.toggleMute();
     setIsMuted(nextState);
   };
 
   const navLinks = [
-    { label: 'Work', href: '#projects', num: '01' },
-    { label: 'Expertise', href: '#skills', num: '02' },
-    { label: 'Playground', href: '#playground', num: '03' },
-    { label: 'Journey', href: '#journey', num: '04' },
-    { label: 'About', href: '#about', num: '05' },
-    { label: 'Contact', href: '#contact', num: '06' },
+    { label: 'Home', path: '/' },
+    { label: 'About', path: '/about' },
+    { label: 'Projects', path: '/projects' },
+    { label: 'Skills', path: '/skills' },
+    { label: 'Experiments', path: '/experiments' },
+    { label: 'Experience', path: '/experience' },
+    { label: 'Contact', path: '/contact' },
   ];
-
-  const handleLinkClick = () => {
-    soundManager.playClick();
-    setIsMobileMenuOpen(false);
-  };
 
   return (
     <>
       <header
         className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
           isScrolled
-            ? 'py-3 bg-bg-primary/90 backdrop-blur-md border-b border-borderline shadow-sm'
-            : 'py-5 bg-transparent'
+            ? 'py-3 bg-bg-primary/95 backdrop-blur-md border-b border-borderline shadow-sm'
+            : 'py-5 bg-bg-primary/80 backdrop-blur-sm'
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          {/* Logo Brand Name */}
-          <a
-            href="#"
+          
+          {/* Logo Brand Name - ALWAYS NAVIGATES TO HOME (/) */}
+          <Link
+            to="/"
             onClick={() => soundManager.playClick()}
             className="group flex items-center gap-3 select-none"
-            aria-label="Navin Chaudhary - Creative Developer Portfolio"
+            aria-label="Navin Chaudhary - Navigate to Home"
           >
             {/* Navin Mini Circular Avatar */}
-            <div className="relative w-10 h-10 rounded-full border-2 border-ink-primary overflow-hidden bg-accent-yellow shadow-brutal-sm group-hover:scale-105 transition-transform">
+            <div className="relative w-10 h-10 rounded-full border-2 border-ink-primary overflow-hidden bg-accent-yellow shadow-brutal-sm group-hover:scale-105 transition-transform shrink-0">
               <img
                 src="/assets/character/navin-avatar.png"
                 alt="Navin Chaudhary avatar"
@@ -85,7 +89,7 @@ export const Navbar: React.FC = () => {
             </div>
 
             <div className="flex flex-col">
-              <span className="font-grotesk font-bold tracking-tight text-ink-primary text-base sm:text-lg leading-none group-hover:text-accent-orange transition-colors">
+              <span className="font-grotesk font-extrabold tracking-tight text-ink-primary text-base sm:text-lg leading-none group-hover:text-accent-orange transition-colors">
                 NAVIN CHAUDHARY
               </span>
               <span className="font-grotesk text-[10px] uppercase tracking-wider text-ink-secondary flex items-center gap-1.5 mt-0.5">
@@ -93,10 +97,10 @@ export const Navbar: React.FC = () => {
                 <span>Available for work</span>
               </span>
             </div>
-          </a>
+          </Link>
 
-          {/* Center Info Pill: Time in India & Editorial Badge */}
-          <div className="hidden lg:flex items-center gap-3 px-3.5 py-1.5 bg-white/80 border border-borderline rounded-full shadow-brutal-sm text-xs font-grotesk">
+          {/* Center Info Pill: Time in India */}
+          <div className="hidden xl:flex items-center gap-3 px-3.5 py-1.5 bg-white border border-borderline rounded-full shadow-brutal-sm text-xs font-grotesk">
             <span className="text-ink-secondary">INDIA</span>
             <span className="font-mono font-medium text-ink-primary">{currentTime} IST</span>
             <span className="text-borderline">|</span>
@@ -106,18 +110,23 @@ export const Navbar: React.FC = () => {
           </div>
 
           {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center gap-6">
-            <div className="flex items-center gap-1 p-1 bg-white/80 border border-borderline rounded-full shadow-brutal-sm">
+          <nav className="hidden lg:flex items-center gap-5">
+            <div className="flex items-center gap-1 p-1 bg-white border border-borderline rounded-full shadow-brutal-sm">
               {navLinks.map((link) => (
-                <a
-                  key={link.num}
-                  href={link.href}
+                <NavLink
+                  key={link.path}
+                  to={link.path}
                   onClick={() => soundManager.playHover()}
-                  className="px-3 py-1.5 rounded-full font-grotesk text-xs font-medium text-ink-primary hover:bg-bg-secondary hover:text-accent-orange transition-all duration-150"
+                  className={({ isActive }) =>
+                    `px-3.5 py-1.5 rounded-full font-grotesk text-xs font-semibold transition-all duration-150 ${
+                      isActive
+                        ? 'bg-ink-primary text-white shadow-brutal-sm'
+                        : 'text-ink-primary hover:bg-bg-secondary hover:text-accent-orange'
+                    }`
+                  }
                 >
-                  <span className="text-[10px] text-ink-secondary mr-1 opacity-60">{link.num}</span>
                   {link.label}
-                </a>
+                </NavLink>
               ))}
             </div>
 
@@ -132,19 +141,19 @@ export const Navbar: React.FC = () => {
               {isMuted ? <VolumeX className="w-4 h-4 text-ink-secondary" /> : <Volume2 className="w-4 h-4 text-ink-primary" />}
             </button>
 
-            {/* Contact CTA Pill */}
-            <a
-              href="#contact"
+            {/* Contact CTA Link */}
+            <Link
+              to="/contact"
               onClick={() => soundManager.playClick()}
-              className="group relative px-4 py-2 rounded-full bg-ink-primary text-white font-grotesk text-xs font-semibold tracking-wide border-2 border-ink-primary shadow-brutal hover:shadow-brutal-orange hover:bg-accent-orange hover:border-accent-orange transition-all duration-200 flex items-center gap-1"
+              className="group relative px-4 py-2 rounded-full bg-ink-primary text-white font-grotesk text-xs font-bold tracking-wide border-2 border-ink-primary shadow-brutal hover:shadow-brutal-orange hover:bg-accent-orange hover:border-accent-orange transition-all duration-200 flex items-center gap-1"
             >
               <span>Let's Talk</span>
               <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-            </a>
+            </Link>
           </nav>
 
           {/* Mobile Right Controls: Sound & Hamburger */}
-          <div className="flex md:hidden items-center gap-2">
+          <div className="flex lg:hidden items-center gap-2">
             <button
               onClick={handleToggleSound}
               aria-label="Toggle sound"
@@ -175,35 +184,38 @@ export const Navbar: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-x-0 top-16 z-30 bg-bg-primary/95 backdrop-blur-lg border-b-2 border-ink-primary shadow-brutal-lg md:hidden p-6"
+            className="fixed inset-x-0 top-16 z-30 bg-bg-primary/95 backdrop-blur-lg border-b-2 border-ink-primary shadow-brutal-lg lg:hidden p-6"
           >
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2">
               {navLinks.map((link) => (
-                <a
-                  key={link.num}
-                  href={link.href}
-                  onClick={handleLinkClick}
-                  className="flex items-center justify-between p-3 rounded-xl bg-white border border-borderline font-grotesk text-base font-bold text-ink-primary hover:bg-accent-yellow/40 transition-colors"
+                <NavLink
+                  key={link.path}
+                  to={link.path}
+                  onClick={() => soundManager.playClick()}
+                  className={({ isActive }) =>
+                    `flex items-center justify-between p-3 rounded-xl border font-grotesk text-base font-bold transition-colors ${
+                      isActive
+                        ? 'bg-ink-primary text-white border-ink-primary shadow-brutal-sm'
+                        : 'bg-white border-borderline text-ink-primary hover:bg-accent-yellow/40'
+                    }`
+                  }
                 >
-                  <span className="flex items-center gap-2">
-                    <span className="text-xs text-accent-orange font-mono">{link.num}</span>
-                    <span>{link.label}</span>
-                  </span>
-                  <ArrowUpRight className="w-4 h-4 text-ink-secondary" />
-                </a>
+                  <span>{link.label}</span>
+                  <ArrowUpRight className="w-4 h-4 opacity-70" />
+                </NavLink>
               ))}
 
-              <div className="pt-2 flex flex-col gap-2">
-                <a
-                  href="#contact"
-                  onClick={handleLinkClick}
-                  className="w-full py-3 rounded-xl bg-ink-primary text-white text-center font-grotesk font-bold text-sm shadow-brutal hover:bg-accent-orange transition-colors flex items-center justify-center gap-2"
+              <div className="pt-4 flex flex-col gap-3">
+                <Link
+                  to="/contact"
+                  onClick={() => soundManager.playClick()}
+                  className="w-full py-3 rounded-xl bg-accent-orange text-white text-center font-grotesk font-bold text-sm shadow-brutal flex items-center justify-center gap-2"
                 >
                   <span>Start a Conversation</span>
                   <ArrowUpRight className="w-4 h-4" />
-                </a>
+                </Link>
 
-                <div className="flex items-center justify-center gap-4 pt-3 text-xs font-grotesk text-ink-secondary">
+                <div className="flex items-center justify-center gap-4 pt-2 text-xs font-grotesk text-ink-secondary">
                   <a href={SOCIAL_LINKS.github.url} target="_blank" rel="noreferrer" className="hover:text-ink-primary">
                     GitHub
                   </a>
@@ -224,4 +236,3 @@ export const Navbar: React.FC = () => {
     </>
   );
 };
-

@@ -1,8 +1,9 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { SOCIAL_LINKS } from '../../data/socialLinks';
 import { soundManager } from '../../utils/audio';
-import { ArrowUp, Heart, Terminal } from 'lucide-react';
+import { ArrowUp } from 'lucide-react';
 import { GithubIcon, InstagramIcon, LinkedinIcon, WhatsappIcon } from '../common/SocialIcons';
 
 export const FooterSection: React.FC = () => {
@@ -20,12 +21,12 @@ export const FooterSection: React.FC = () => {
       <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-[85%] z-20 group">
         <motion.div
           whileHover={{ y: -8 }}
-          onClick={() => soundManager.playCharacterReact('wink')}
+          onClick={() => soundManager.playCharacterReact('happy')}
           className="cursor-pointer relative flex flex-col items-center"
         >
           {/* Comic Callout */}
           <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 px-3 py-1 bg-white border border-ink-primary rounded-full text-[10px] font-grotesk font-bold text-ink-primary shadow-brutal-sm mb-1 whitespace-nowrap">
-            Thanks for scrolling! 👋
+            Thanks for visiting! 👋
           </span>
           <img
             src="/assets/character/navin-peeking.png"
@@ -41,9 +42,13 @@ export const FooterSection: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start pb-12 border-b border-borderline">
           
           <div className="md:col-span-6 flex flex-col">
-            <h2 className="font-grotesk font-black text-3xl sm:text-4xl text-ink-primary tracking-tight mb-2">
+            <Link
+              to="/"
+              onClick={() => soundManager.playClick()}
+              className="font-grotesk font-black text-3xl sm:text-4xl text-ink-primary tracking-tight mb-2 hover:text-accent-orange transition-colors inline-block"
+            >
               NAVIN CHAUDHARY
-            </h2>
+            </Link>
             <p className="font-grotesk text-sm font-semibold text-accent-orange uppercase tracking-wider mb-4">
               "BUILT WITH CURIOSITY & CODE."
             </p>
@@ -54,15 +59,30 @@ export const FooterSection: React.FC = () => {
 
           <div className="md:col-span-4 flex flex-col">
             <h4 className="font-grotesk font-bold text-xs uppercase tracking-wider text-ink-muted mb-3">
-              Navigation Index
+              Portfolio Navigation
             </h4>
             <div className="grid grid-cols-2 gap-2 text-xs font-grotesk font-medium text-ink-secondary">
-              <a href="#projects" className="hover:text-ink-primary hover:underline">01 / Work</a>
-              <a href="#skills" className="hover:text-ink-primary hover:underline">02 / Expertise</a>
-              <a href="#playground" className="hover:text-ink-primary hover:underline">03 / Playground</a>
-              <a href="#journey" className="hover:text-ink-primary hover:underline">04 / Journey</a>
-              <a href="#about" className="hover:text-ink-primary hover:underline">05 / About</a>
-              <a href="#contact" className="hover:text-ink-primary hover:underline">06 / Contact</a>
+              <Link to="/" onClick={() => soundManager.playHover()} className="hover:text-ink-primary hover:underline">
+                Home
+              </Link>
+              <Link to="/about" onClick={() => soundManager.playHover()} className="hover:text-ink-primary hover:underline">
+                About
+              </Link>
+              <Link to="/projects" onClick={() => soundManager.playHover()} className="hover:text-ink-primary hover:underline">
+                Projects
+              </Link>
+              <Link to="/skills" onClick={() => soundManager.playHover()} className="hover:text-ink-primary hover:underline">
+                Skills
+              </Link>
+              <Link to="/experiments" onClick={() => soundManager.playHover()} className="hover:text-ink-primary hover:underline">
+                Experiments
+              </Link>
+              <Link to="/experience" onClick={() => soundManager.playHover()} className="hover:text-ink-primary hover:underline">
+                Experience
+              </Link>
+              <Link to="/contact" onClick={() => soundManager.playHover()} className="hover:text-ink-primary hover:underline col-span-2 text-accent-orange font-bold">
+                Contact & Inquiries ↗
+              </Link>
             </div>
           </div>
 

@@ -540,3 +540,4 @@ export const RiggedCharacter: React.FC = () => {
     </div>
   );
 };
+
