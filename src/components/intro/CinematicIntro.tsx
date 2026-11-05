@@ -36,6 +36,7 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
     const preloads = [
       '/assets/character/navin-official.png',
       '/assets/character/navin-base-sclera.png',
+      '/assets/character/navin-eye-frame.png',
       '/assets/character/navin-iris-left-clean.png',
       '/assets/character/navin-iris-right-clean.png',
       '/assets/character/navin-avatar.png'
@@ -371,3 +372,4 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
     </div>
   );
 };
+

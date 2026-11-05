@@ -63,14 +63,14 @@ export const OfficialCharacterRig: React.FC = () => {
           className="w-full h-full filter drop-shadow-2xl overflow-visible"
         >
           <defs>
-            {/* Left Eye Socket Opening ClipPath */}
+            {/* Left Eye Socket Opening ClipPath - Anatomically mapped to sclera boundary */}
             <clipPath id="socketClipLeft">
-              <path d="M 408 337 Q 440 326 472 337 Q 440 346 408 337 Z" />
+              <path d="M 412 334 C 424 327, 456 327, 468 335 C 456 342, 424 342, 412 334 Z" />
             </clipPath>
 
-            {/* Right Eye Socket Opening ClipPath */}
+            {/* Right Eye Socket Opening ClipPath - Anatomically mapped to sclera boundary */}
             <clipPath id="socketClipRight">
-              <path d="M 552 337 Q 582 326 612 337 Q 582 346 552 337 Z" />
+              <path d="M 556 334 C 568 327, 598 327, 610 335 C 598 340, 568 340, 556 334 Z" />
             </clipPath>
           </defs>
 
@@ -87,7 +87,7 @@ export const OfficialCharacterRig: React.FC = () => {
               ease: 'easeInOut',
             }}
           >
-            {/* BASE OFFICIAL ILLUSTRATION (Pristine authentic artwork with clean sclera) */}
+            {/* BASE OFFICIAL ILLUSTRATION (Clean seamless sclera base plate) */}
             <image
               href="/assets/character/navin-base-sclera.png"
               x="0"
@@ -133,48 +133,42 @@ export const OfficialCharacterRig: React.FC = () => {
                 >
                   <image
                     href="/assets/character/navin-iris-left-clean.png"
-                    x="430"
-                    y="328"
-                    width="22"
+                    x="424"
+                    y="326"
+                    width="36"
                     height="16"
                   />
                 </motion.g>
 
-                {/* Left Eyelid Drop Curtain (ONLY VISIBLE ON BLINK/SLEEP/BORED) */}
+                {/* Left Eyelid Drop Curtain (Natural skin closure, NO harsh synthetic black lines) */}
                 <motion.g
                   initial={{ opacity: 0 }}
                   animate={{
-                    opacity: isEyelidClosed ? 1 : isBored ? 0.75 : 0,
-                    y: isEyelidClosed ? 0 : isBored ? -6 : -25,
+                    opacity: isEyelidClosed ? 1 : isBored ? 0.6 : 0,
+                    y: isEyelidClosed ? 0 : isBored ? -8 : -22,
                   }}
                   transition={{
-                    duration: isBlinking ? 0.08 : 0.2,
+                    duration: isBlinking ? 0.08 : 0.22,
                     ease: 'easeInOut',
                   }}
                 >
                   <path
-                    d="M 400 315 L 480 315 L 480 348 L 400 348 Z"
-                    fill="#E5A885"
+                    d="M 405 320 L 475 320 L 475 344 L 405 344 Z"
+                    fill="#DFAC8D"
                   />
-                  {/* Closed Eyelash Line */}
-                  <path
-                    d="M 406 338 Q 440 343 474 338"
-                    stroke="#140E0D"
-                    strokeWidth="4.2"
-                    strokeLinecap="round"
-                    fill="none"
-                  />
+                  {/* Delicate soft natural closed lash crease (visible ONLY when eye is fully closed) */}
+                  {isEyelidClosed && (
+                    <path
+                      d="M 416 337 Q 440 341 464 337"
+                      stroke="#342018"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      fill="none"
+                      opacity={0.85}
+                    />
+                  )}
                 </motion.g>
               </g>
-
-              {/* Left Eyelash Upper Contour (Crisp & Dark) */}
-              <path
-                d="M 406 338 Q 440 326 473 337"
-                stroke="#140E0D"
-                strokeWidth="4.2"
-                strokeLinecap="round"
-                fill="none"
-              />
 
               {/* ------------------------------------------ */}
               {/* RIGHT EYE PUPIL (Smooth Real-Time Tracking)*/}
@@ -194,47 +188,55 @@ export const OfficialCharacterRig: React.FC = () => {
                 >
                   <image
                     href="/assets/character/navin-iris-right-clean.png"
-                    x="570"
-                    y="328"
-                    width="22"
-                    height="16"
+                    x="566"
+                    y="326"
+                    width="36"
+                    height="15"
                   />
                 </motion.g>
 
-                {/* Right Eyelid Drop Curtain (ONLY VISIBLE ON BLINK/SLEEP/BORED) */}
+                {/* Right Eyelid Drop Curtain (Natural skin closure, NO harsh synthetic black lines) */}
                 <motion.g
                   initial={{ opacity: 0 }}
                   animate={{
-                    opacity: isEyelidClosed ? 1 : isBored ? 0.75 : 0,
-                    y: isEyelidClosed ? 0 : isBored ? -6 : -25,
+                    opacity: isEyelidClosed ? 1 : isBored ? 0.6 : 0,
+                    y: isEyelidClosed ? 0 : isBored ? -8 : -22,
                   }}
                   transition={{
-                    duration: isBlinking ? 0.08 : 0.2,
+                    duration: isBlinking ? 0.08 : 0.22,
                     ease: 'easeInOut',
                   }}
                 >
                   <path
-                    d="M 545 315 L 625 315 L 625 348 L 545 348 Z"
-                    fill="#E5A885"
+                    d="M 550 320 L 620 320 L 620 344 L 550 344 Z"
+                    fill="#DFAC8D"
                   />
-                  {/* Closed Eyelash Line */}
-                  <path
-                    d="M 550 338 Q 582 343 614 338"
-                    stroke="#140E0D"
-                    strokeWidth="4.2"
-                    strokeLinecap="round"
-                    fill="none"
-                  />
+                  {/* Delicate soft natural closed lash crease (visible ONLY when eye is fully closed) */}
+                  {isEyelidClosed && (
+                    <path
+                      d="M 558 337 Q 582 340 606 337"
+                      stroke="#342018"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      fill="none"
+                      opacity={0.85}
+                    />
+                  )}
                 </motion.g>
               </g>
 
-              {/* Right Eyelash Upper Contour (Crisp & Dark) */}
-              <path
-                d="M 551 337 Q 582 326 613 338"
-                stroke="#140E0D"
-                strokeWidth="4.2"
-                strokeLinecap="round"
-                fill="none"
+              {/* ------------------------------------------ */}
+              {/* FOREGROUND NATURAL EYELASHES & EYELID LAYER */}
+              {/* Irises glide naturally behind the authentic hand-drawn eyelashes */}
+              {/* ------------------------------------------ */}
+              <image
+                href="/assets/character/navin-eye-frame.png"
+                x="0"
+                y="0"
+                width="1024"
+                height="935"
+                preserveAspectRatio="xMidYMid meet"
+                className="pointer-events-none"
               />
 
               {/* ------------------------------------------ */}

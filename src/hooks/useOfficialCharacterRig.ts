@@ -196,16 +196,16 @@ export function useOfficialCharacterRig(): OfficialCharacterRigState {
       const normX = deltaX / (window.innerWidth * 0.45);
       const normY = deltaY / (window.innerHeight * 0.45);
 
-      // Clamp pupil travel within realistic, subtle limits (-3.5px to +3.5px X, -2.0px to +2.0px Y)
+      // Clamp pupil travel within realistic, subtle limits (-3.5px to +3.5px X, -1.6px to +1.6px Y)
       const targetPupilX = Math.max(-3.5, Math.min(3.5, normX * 3.5));
-      const targetPupilY = Math.max(-2.0, Math.min(2.0, normY * 2.0));
+      const targetPupilY = Math.max(-1.6, Math.min(1.6, normY * 1.6));
 
       setPupilX(targetPupilX);
       setPupilY(targetPupilY);
 
-      // Subtle 3D perspective head rotation (-4deg to +4deg)
-      const targetRotY = Math.max(-4.5, Math.min(4.5, normX * 4.5));
-      const targetRotX = Math.max(-3.5, Math.min(3.5, -normY * 3.5));
+      // Subtle 3D perspective head rotation (-3.8deg to +3.8deg)
+      const targetRotY = Math.max(-3.8, Math.min(3.8, normX * 3.8));
+      const targetRotX = Math.max(-2.8, Math.min(2.8, -normY * 2.8));
 
       setHeadRotateY(targetRotY);
       setHeadRotateX(targetRotX);
@@ -224,11 +224,21 @@ export function useOfficialCharacterRig(): OfficialCharacterRigState {
       });
     };
 
+    const onMouseLeaveWindow = () => {
+      setPupilX(0);
+      setPupilY(0);
+      setHeadRotateX(0);
+      setHeadRotateY(0);
+      setExpression((prev) => (prev === 'looking' ? 'idle' : prev));
+    };
+
     window.addEventListener('mousemove', onMouseMove, { passive: true });
+    window.addEventListener('mouseleave', onMouseLeaveWindow);
     resetInactivity();
 
     return () => {
       window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseleave', onMouseLeaveWindow);
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
       if (sleepTimerRef.current) clearTimeout(sleepTimerRef.current);
       if (clickDecayRef.current) clearTimeout(clickDecayRef.current);
