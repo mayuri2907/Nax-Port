@@ -3,84 +3,99 @@ import { soundManager } from '../utils/audio';
 
 export type CharacterVideoState =
   | 'idle'
+  | 'welcome'
   | 'looking'
   | 'curious'
   | 'happy'
   | 'playful'
   | 'surprised'
+  | 'bored'
   | 'annoyed'
   | 'angry';
 
 export interface VideoSegment {
   start: number;
   end: number;
-  loop?: boolean;
-  holdAtEnd?: boolean;
-  returnToIdleAfterMs?: number;
   playbackRate?: number;
+  nextState: CharacterVideoState;
+  priority: number;
 }
 
-// Precise segment boundaries matching the 10.027s 24fps character video
+// Frame-accurate timeline segments for the 10.027s 24fps character video
 export const VIDEO_SEGMENTS: Record<CharacterVideoState, VideoSegment> = {
   idle: {
     start: 0.0,
-    end: 1.4,
-    loop: true,
+    end: 1.42,
     playbackRate: 1.0,
+    nextState: 'idle',
+    priority: 1, // lowest
+  },
+  welcome: {
+    start: 3.85,
+    end: 4.8,
+    playbackRate: 1.0,
+    nextState: 'idle',
+    priority: 2,
   },
   looking: {
     start: 1.45,
     end: 2.75,
-    holdAtEnd: true,
-    returnToIdleAfterMs: 2500,
-    playbackRate: 1.1,
+    playbackRate: 1.05,
+    nextState: 'idle',
+    priority: 3,
   },
   curious: {
-    start: 2.8,
-    end: 3.8,
-    holdAtEnd: true,
-    returnToIdleAfterMs: 2800,
+    start: 2.75,
+    end: 3.85,
     playbackRate: 1.0,
+    nextState: 'idle',
+    priority: 4,
   },
   happy: {
-    // Warm friendly smile
     start: 3.85,
     end: 4.8,
-    holdAtEnd: true,
-    returnToIdleAfterMs: 3200,
     playbackRate: 1.0,
+    nextState: 'idle',
+    priority: 5,
+  },
+  bored: {
+    start: 6.8,
+    end: 7.7,
+    playbackRate: 1.0,
+    nextState: 'idle',
+    priority: 2,
   },
   playful: {
-    // Sunglasses action
+    // First click: Wears and adjusts sunglasses
     start: 4.85,
-    end: 5.8,
-    holdAtEnd: true,
-    returnToIdleAfterMs: 3800,
+    end: 5.82,
     playbackRate: 1.0,
+    nextState: 'happy', // Auto-transitions smoothly to happy smile
+    priority: 6,
   },
   surprised: {
-    // Raised hand, wide eyes gasp
+    // Second click: Hand raised, wide-eye gasp
     start: 5.85,
     end: 6.8,
-    holdAtEnd: true,
-    returnToIdleAfterMs: 3000,
     playbackRate: 1.0,
+    nextState: 'curious', // Auto-transitions to curious glance
+    priority: 7,
   },
   annoyed: {
-    // Irritated grimace with tick mark
-    start: 7.6,
-    end: 8.6,
-    holdAtEnd: true,
-    returnToIdleAfterMs: 3400,
+    // 3-5 clicks: Irritated grimace with tick mark
+    start: 7.75,
+    end: 8.75,
     playbackRate: 1.0,
+    nextState: 'idle', // Auto-transitions back to idle
+    priority: 8,
   },
   angry: {
-    // Pulsing red anime vein, frustrated sigh
-    start: 8.65,
-    end: 9.95,
-    holdAtEnd: true,
-    returnToIdleAfterMs: 4000,
+    // 6+ clicks: Pulsing red anime vein, exasperation
+    start: 8.75,
+    end: 9.98,
     playbackRate: 1.0,
+    nextState: 'annoyed', // Cools down to annoyed then idle
+    priority: 9,
   },
 };
 
@@ -89,6 +104,10 @@ export const DIALOGUE_MAP: Record<CharacterVideoState, string[]> = {
     "Not just writing code. I build experiences.",
     "Hey! Welcome to my personal digital space.",
     "Turning ideas into kinetic digital reality."
+  ],
+  welcome: [
+    "Welcome! Glad you're here. Let's explore!",
+    "Hey there! Ready to discover my latest work?"
   ],
   looking: [
     "I see where you're pointing!",
@@ -115,6 +134,10 @@ export const DIALOGUE_MAP: Record<CharacterVideoState, string[]> = {
     "You clicked! Nice reflex.",
     "Ready to dive into my projects?"
   ],
+  bored: [
+    "Still exploring? Feel free to check out my work!",
+    "Taking a breather? The projects section has cool stuff!"
+  ],
   annoyed: [
     "Hey, easy on the mouse button! ☕",
     "Poking developers usually requires coffee first.",
@@ -127,13 +150,15 @@ export const DIALOGUE_MAP: Record<CharacterVideoState, string[]> = {
   ]
 };
 
+export type VideoSlot = 'A' | 'B';
+
 export interface UseVideoCharacterControllerReturn {
   activeState: CharacterVideoState;
-  videoRef: React.RefObject<HTMLVideoElement | null>;
+  activeSlot: VideoSlot;
+  videoARef: React.RefObject<HTMLVideoElement | null>;
+  videoBRef: React.RefObject<HTMLVideoElement | null>;
   containerRef: React.RefObject<HTMLDivElement | null>;
   speechMessage: string | null;
-  headRotateX: number;
-  headRotateY: number;
   isVideoReady: boolean;
   handleCharacterClick: () => void;
   handleMouseEnter: () => void;
@@ -142,27 +167,41 @@ export interface UseVideoCharacterControllerReturn {
 
 export function useVideoCharacterController(): UseVideoCharacterControllerReturn {
   const [activeState, setActiveState] = useState<CharacterVideoState>('idle');
+  const [activeSlot, setActiveSlot] = useState<VideoSlot>('A');
   const [speechMessage, setSpeechMessage] = useState<string | null>(null);
-  const [headRotateX, setHeadRotateX] = useState<number>(0);
-  const [headRotateY, setHeadRotateY] = useState<number>(0);
   const [isVideoReady, setIsVideoReady] = useState<boolean>(false);
 
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  // Video element refs for dual-video crossfade
+  const videoARef = useRef<HTMLVideoElement | null>(null);
+  const videoBRef = useRef<HTMLVideoElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
+  // High-frequency animation state kept in refs to avoid React re-render overhead
+  const activeSlotRef = useRef<VideoSlot>('A');
   const activeStateRef = useRef<CharacterVideoState>('idle');
   const currentSegmentRef = useRef<VideoSegment>(VIDEO_SEGMENTS.idle);
-  const isSeekingRef = useRef<boolean>(false);
+  const isSegmentEndingRef = useRef<boolean>(false);
+  const idleCycleCountRef = useRef<number>(0);
 
+  // Interaction tracking refs
   const clickCountRef = useRef<number>(0);
   const clickDecayTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const returnToIdleTimerRef = useRef<NodeJS.Timeout | null>(null);
   const speechTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const lastMouseMoveTimeRef = useRef<number>(Date.now());
-  const rafIdRef = useRef<number | null>(null);
+  const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isHoveredRef = useRef<boolean>(false);
 
-  // Trigger dialogue speech bubble
+  // Cursor tracking refs
+  const pointerPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const lastPointerTimeRef = useRef<number>(Date.now());
+  const cursorSpeedRef = useRef<number>(0);
+  const prevDistanceRef = useRef<number>(1000);
+
+  // 3D Tilt orientation (lerped in RAF)
+  const currentTiltRef = useRef<{ rotateX: number; rotateY: number }>({ rotateX: 0, rotateY: 0 });
+  const targetTiltRef = useRef<{ rotateX: number; rotateY: number }>({ rotateX: 0, rotateY: 0 });
+  const rafIdRef = useRef<number | null>(null);
+
+  // Trigger floating speech dialogue
   const triggerSpeech = useCallback((text: string, durationMs: number = 3200) => {
     if (speechTimerRef.current) clearTimeout(speechTimerRef.current);
     setSpeechMessage(text);
@@ -171,217 +210,356 @@ export function useVideoCharacterController(): UseVideoCharacterControllerReturn
     }, durationMs);
   }, []);
 
-  // Return to idle transition helper
-  const scheduleReturnToIdle = useCallback((delayMs: number = 2500) => {
-    if (returnToIdleTimerRef.current) clearTimeout(returnToIdleTimerRef.current);
-    returnToIdleTimerRef.current = setTimeout(() => {
-      // Don't interrupt if currently in an active clicked state with pending clicks
-      if (clickCountRef.current > 0) return;
-      playSegment('idle');
-    }, delayMs);
+  // Determine the next state automatically when a segment reaches its end
+  const getNextAutoState = useCallback((currentState: CharacterVideoState): CharacterVideoState => {
+    // If still hovering over character and not in angry state
+    if (isHoveredRef.current && clickCountRef.current === 0) {
+      return 'happy';
+    }
+
+    // Progression graph based on current state
+    switch (currentState) {
+      case 'angry':
+        // Cools down into annoyed
+        return 'annoyed';
+
+      case 'annoyed':
+        // Cools down into idle
+        return 'idle';
+
+      case 'playful':
+        // Sunglasses action finishes -> transitions to happy smile
+        return 'happy';
+
+      case 'surprised':
+        // Gasp finishes -> transitions to curious look
+        return 'curious';
+
+      case 'curious':
+        return 'idle';
+
+      case 'looking':
+        // If cursor is still actively moving, continue looking; otherwise return to idle
+        if (cursorSpeedRef.current > 0.25 && clickCountRef.current === 0) {
+          return 'looking';
+        }
+        return 'idle';
+
+      case 'happy':
+        return isHoveredRef.current ? 'happy' : 'idle';
+
+      case 'welcome':
+        return 'idle';
+
+      case 'bored':
+        return 'idle';
+
+      case 'idle': {
+        // Continuous natural idle variations:
+        // Normally loop idle (0.0 - 1.4s), but every 4th cycle insert a natural glance or soft smile
+        idleCycleCountRef.current += 1;
+        if (idleCycleCountRef.current % 4 === 0) {
+          return 'curious';
+        }
+        return 'idle';
+      }
+
+      default:
+        return 'idle';
+    }
   }, []);
 
-  // Core segment player: seeks cleanly to segment start and controls boundary
-  const playSegment = useCallback((stateName: CharacterVideoState) => {
-    const video = videoRef.current;
-    if (!video) return;
+  // Core dual-video crossfade transition function:
+  // Prepares the standby video at target start and crossfades without ANY visible pause or black frame
+  const transitionTo = useCallback((newState: CharacterVideoState, force: boolean = false) => {
+    const targetSeg = VIDEO_SEGMENTS[newState];
+    const currentSeg = currentSegmentRef.current;
 
-    // Prevent re-triggering the same segment if already playing
-    if (activeStateRef.current === stateName && !video.paused) {
+    // Unless forced (segment ending), lower-priority states cannot interrupt high-priority click interactions
+    if (!force && targetSeg.priority < currentSeg.priority && !isSegmentEndingRef.current) {
       return;
     }
 
-    if (returnToIdleTimerRef.current) clearTimeout(returnToIdleTimerRef.current);
+    // Avoid redundant re-triggers of the exact same state if already in progress and not completing
+    if (activeStateRef.current === newState && !isSegmentEndingRef.current) {
+      return;
+    }
 
-    activeStateRef.current = stateName;
-    setActiveState(stateName);
+    const currentSlot = activeSlotRef.current;
+    const nextSlot: VideoSlot = currentSlot === 'A' ? 'B' : 'A';
+    const currentVideo = currentSlot === 'A' ? videoARef.current : videoBRef.current;
+    const nextVideo = nextSlot === 'A' ? videoARef.current : videoBRef.current;
 
-    const seg = VIDEO_SEGMENTS[stateName];
-    currentSegmentRef.current = seg;
+    if (!nextVideo) return;
 
-    video.playbackRate = seg.playbackRate || 1.0;
+    activeStateRef.current = newState;
+    setActiveState(newState);
+    currentSegmentRef.current = targetSeg;
+    isSegmentEndingRef.current = false;
 
-    isSeekingRef.current = true;
-    video.currentTime = seg.start;
+    // Configure the standby video
+    nextVideo.playbackRate = targetSeg.playbackRate || 1.0;
+    nextVideo.currentTime = targetSeg.start;
 
-    const onSeeked = () => {
-      isSeekingRef.current = false;
-      video.removeEventListener('seeked', onSeeked);
-      video.play().catch(() => {});
-    };
-    video.addEventListener('seeked', onSeeked, { once: true });
+    // Start playback on next video and crossfade
+    const playPromise = nextVideo.play();
+    if (playPromise !== undefined) {
+      playPromise
+        .then(() => {
+          // Switch active slot for smooth CSS opacity crossfade
+          activeSlotRef.current = nextSlot;
+          setActiveSlot(nextSlot);
+
+          // Once next video is visibly active and crossfading, pause the inactive video after 240ms
+          setTimeout(() => {
+            if (activeSlotRef.current === nextSlot && currentVideo && !currentVideo.paused) {
+              currentVideo.pause();
+            }
+          }, 240);
+        })
+        .catch(() => {
+          // Autoplay fallback (browser interaction pending)
+        });
+    }
   }, []);
 
-  // Frame monitoring loop to enforce segment boundaries
+  // Primary animation loop: checks segment boundaries and applies 60fps 3D tilt
   useEffect(() => {
-    const checkFrame = () => {
-      const video = videoRef.current;
-      if (video && !isSeekingRef.current) {
-        const seg = currentSegmentRef.current;
-        const ct = video.currentTime;
+    const loop = () => {
+      const currentSlot = activeSlotRef.current;
+      const activeVideo = currentSlot === 'A' ? videoARef.current : videoBRef.current;
 
-        // If reached or passed segment end
-        if (ct >= seg.end - 0.04) {
-          if (seg.loop) {
-            // Loop back to segment start seamlessly
-            video.currentTime = seg.start;
-            video.play().catch(() => {});
-          } else if (seg.holdAtEnd) {
-            // Hold on the peak expression frame and schedule return
-            video.pause();
-            video.currentTime = seg.end - 0.02;
-            scheduleReturnToIdle(seg.returnToIdleAfterMs || 2500);
-          }
+      // 1. Continuous playback check: if within 0.08s of segment end, advance to next state
+      if (activeVideo && !activeVideo.paused && !document.hidden) {
+        const ct = activeVideo.currentTime;
+        const seg = currentSegmentRef.current;
+
+        if (ct >= seg.end - 0.08) {
+          isSegmentEndingRef.current = true;
+          const nextState = getNextAutoState(activeStateRef.current);
+          transitionTo(nextState, true);
         }
       }
-      rafIdRef.current = requestAnimationFrame(checkFrame);
+
+      // 2. Smooth 3D tilt interpolation on container (independent of React state)
+      currentTiltRef.current.rotateX +=
+        (targetTiltRef.current.rotateX - currentTiltRef.current.rotateX) * 0.12;
+      currentTiltRef.current.rotateY +=
+        (targetTiltRef.current.rotateY - currentTiltRef.current.rotateY) * 0.12;
+
+      if (containerRef.current) {
+        const rx = currentTiltRef.current.rotateX.toFixed(2);
+        const ry = currentTiltRef.current.rotateY.toFixed(2);
+        containerRef.current.style.transform = `perspective(1200px) rotateX(${rx}deg) rotateY(${ry}deg)`;
+      }
+
+      rafIdRef.current = requestAnimationFrame(loop);
     };
 
-    rafIdRef.current = requestAnimationFrame(checkFrame);
+    rafIdRef.current = requestAnimationFrame(loop);
 
     return () => {
       if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
     };
-  }, [scheduleReturnToIdle]);
+  }, [getNextAutoState, transitionTo]);
 
-  // Handle video ready state
+  // Initial setup: start video playback cleanly
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
+    const vidA = videoARef.current;
+    const vidB = videoBRef.current;
+    if (!vidA) return;
 
-    const onCanPlay = () => {
+    let started = false;
+    const startInitialPlayback = () => {
+      if (started) return;
+      started = true;
       setIsVideoReady(true);
-      if (activeStateRef.current === 'idle') {
-        playSegment('idle');
-      }
+      activeStateRef.current = 'welcome';
+      setActiveState('welcome');
+      currentSegmentRef.current = VIDEO_SEGMENTS.welcome;
+      vidA.currentTime = VIDEO_SEGMENTS.welcome.start;
+      vidA.play().catch(() => {});
     };
 
-    video.addEventListener('canplay', onCanPlay);
-    if (video.readyState >= 3) {
-      onCanPlay();
+    vidA.addEventListener('canplay', startInitialPlayback, { once: true });
+    if (vidA.readyState >= 3) {
+      startInitialPlayback();
+    }
+
+    // Preload both videos
+    if (vidB && vidB.readyState < 3) {
+      vidB.load();
     }
 
     return () => {
-      video.removeEventListener('canplay', onCanPlay);
+      vidA.removeEventListener('canplay', startInitialPlayback);
     };
-  }, [playSegment]);
+  }, []);
 
-  // Click interaction state machine with escalation
+  // Global cursor tracking across the ENTIRE viewport
+  useEffect(() => {
+    const onPointerMove = (e: PointerEvent) => {
+      const now = performance.now();
+      const dt = Math.max(1, now - lastPointerTimeRef.current);
+      lastPointerTimeRef.current = now;
+
+      const clientX = e.clientX;
+      const clientY = e.clientY;
+
+      const prevX = pointerPosRef.current.x;
+      const prevY = pointerPosRef.current.y;
+      pointerPosRef.current = { x: clientX, y: clientY };
+
+      // Calculate cursor velocity
+      const distMoved = Math.hypot(clientX - prevX, clientY - prevY);
+      const speed = distMoved / dt;
+      cursorSpeedRef.current = speed;
+
+      // Reset inactivity timer
+      if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+      inactivityTimerRef.current = setTimeout(() => {
+        if (clickCountRef.current === 0 && activeStateRef.current === 'idle') {
+          transitionTo('bored', false);
+          triggerSpeech(DIALOGUE_MAP.bored[0], 3000);
+        }
+      }, 14000);
+
+      // Viewport-relative angles for 3D parallax head tracking
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const charCenterX = rect.left + rect.width * 0.5;
+        const charCenterY = rect.top + rect.height * 0.38; // Eye level
+
+        const deltaX = clientX - charCenterX;
+        const deltaY = clientY - charCenterY;
+        const distance = Math.hypot(deltaX, deltaY);
+
+        // Normalize across viewport
+        const reachX = Math.max(300, window.innerWidth * 0.48);
+        const reachY = Math.max(250, window.innerHeight * 0.48);
+        const normX = Math.max(-1, Math.min(1, deltaX / reachX));
+        const normY = Math.max(-1, Math.min(1, deltaY / reachY));
+
+        // 3D tilt target orientation
+        targetTiltRef.current = {
+          rotateY: normX * 8.5,
+          rotateX: -normY * 6.0,
+        };
+
+        // Approaching detection
+        const prevDistance = prevDistanceRef.current;
+        prevDistanceRef.current = distance;
+        const isApproaching = prevDistance > 320 && distance < 220 && distance > 50;
+
+        // Expression evaluation based on priority (if no click interaction is ongoing)
+        if (clickCountRef.current === 0) {
+          if (isHoveredRef.current) {
+            if (activeStateRef.current !== 'happy') {
+              transitionTo('happy');
+            }
+          } else if (isApproaching) {
+            if (activeStateRef.current === 'idle' || activeStateRef.current === 'looking') {
+              transitionTo('curious');
+            }
+          } else if (speed > 0.28 && distance > 80) {
+            // When cursor moves across other sections, trigger looking reaction
+            if (activeStateRef.current === 'idle') {
+              transitionTo('looking');
+            }
+          }
+        }
+      }
+    };
+
+    const onPointerLeaveWindow = () => {
+      targetTiltRef.current = { rotateX: 0, rotateY: 0 };
+      if (clickCountRef.current === 0) {
+        transitionTo('idle');
+      }
+    };
+
+    // Tab visibility handling (pause/resume without freezing)
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        if (videoARef.current) videoARef.current.pause();
+        if (videoBRef.current) videoBRef.current.pause();
+      } else {
+        const activeVid = activeSlotRef.current === 'A' ? videoARef.current : videoBRef.current;
+        if (activeVid) {
+          activeVid.play().catch(() => {});
+        }
+      }
+    };
+
+    window.addEventListener('pointermove', onPointerMove, { passive: true });
+    window.addEventListener('pointerleave', onPointerLeaveWindow);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    return () => {
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerleave', onPointerLeaveWindow);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      if (clickDecayTimerRef.current) clearTimeout(clickDecayTimerRef.current);
+      if (speechTimerRef.current) clearTimeout(speechTimerRef.current);
+      if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+    };
+  }, [transitionTo, triggerSpeech]);
+
+  // Click interaction with escalation: Playful -> Surprised -> Annoyed -> Angry -> Return to Idle
   const handleCharacterClick = useCallback(() => {
     clickCountRef.current += 1;
     const clicks = clickCountRef.current;
 
-    // Reset decay timer on every click
+    // Reset decay timer: after 3.8s of no clicks, counter resets
     if (clickDecayTimerRef.current) clearTimeout(clickDecayTimerRef.current);
     clickDecayTimerRef.current = setTimeout(() => {
       clickCountRef.current = 0;
-      playSegment('idle');
     }, 3800);
 
     if (clicks >= 6) {
-      // Escalated anger (repeated poking)
-      playSegment('angry');
+      // 6+ clicks: Angry vein pulse
+      transitionTo('angry', true);
       soundManager.playCharacterReact('angry');
       triggerSpeech(DIALOGUE_MAP.angry[Math.floor(Math.random() * DIALOGUE_MAP.angry.length)], 3800);
     } else if (clicks >= 3) {
-      // Annoyed / irritated
-      playSegment('annoyed');
+      // 3-5 clicks: Annoyed grimace
+      transitionTo('annoyed', true);
       soundManager.playCharacterReact('annoyed');
       triggerSpeech(DIALOGUE_MAP.annoyed[Math.floor(Math.random() * DIALOGUE_MAP.annoyed.length)], 3200);
     } else if (clicks === 2) {
-      // Surprised reaction
-      playSegment('surprised');
+      // 2nd click: Surprised gasp
+      transitionTo('surprised', true);
       soundManager.playCharacterReact('surprised');
       triggerSpeech(DIALOGUE_MAP.surprised[Math.floor(Math.random() * DIALOGUE_MAP.surprised.length)], 3000);
     } else {
-      // First click: Playful sunglasses action!
-      playSegment('playful');
+      // 1st click: Playful sunglasses action!
+      transitionTo('playful', true);
       soundManager.playClick();
       triggerSpeech(DIALOGUE_MAP.playful[0], 3600);
     }
-  }, [playSegment, triggerSpeech]);
+  }, [transitionTo, triggerSpeech]);
 
-  // Hover interaction
+  // Hover interactions
   const handleMouseEnter = useCallback(() => {
     isHoveredRef.current = true;
-    // Only switch to happy if not in an angry or annoyed escalation
-    if (clickCountRef.current === 0 && activeStateRef.current !== 'playful' && activeStateRef.current !== 'surprised') {
-      playSegment('happy');
+    if (clickCountRef.current === 0) {
+      transitionTo('happy');
       soundManager.playCharacterReact('happy');
       triggerSpeech(DIALOGUE_MAP.happy[0], 2800);
     }
-  }, [playSegment, triggerSpeech]);
+  }, [transitionTo, triggerSpeech]);
 
   const handleMouseLeave = useCallback(() => {
     isHoveredRef.current = false;
-    if (clickCountRef.current === 0) {
-      scheduleReturnToIdle(1800);
-    }
-  }, [scheduleReturnToIdle]);
-
-  // Global mousemove tracking for 3D perspective tilt & looking reaction
-  useEffect(() => {
-    const onMouseMove = (e: MouseEvent) => {
-      lastMouseMoveTimeRef.current = Date.now();
-
-      if (!containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      const centerX = rect.left + rect.width * 0.5;
-      const centerY = rect.top + rect.height * 0.38;
-
-      const deltaX = e.clientX - centerX;
-      const deltaY = e.clientY - centerY;
-
-      const reachX = Math.min(window.innerWidth * 0.45, 500);
-      const reachY = Math.min(window.innerHeight * 0.45, 400);
-
-      const normX = Math.max(-1, Math.min(1, deltaX / reachX));
-      const normY = Math.max(-1, Math.min(1, deltaY / reachY));
-
-      // Subtle 3D perspective tilt on the character container (-5.5deg to +5.5deg)
-      setHeadRotateY(normX * 5.5);
-      setHeadRotateX(-normY * 3.5);
-
-      // If idle and user moves cursor significantly around character, trigger looking animation
-      const distance = Math.hypot(deltaX, deltaY);
-      if (
-        activeStateRef.current === 'idle' &&
-        clickCountRef.current === 0 &&
-        !isHoveredRef.current &&
-        distance < 550 &&
-        distance > 60
-      ) {
-        playSegment('looking');
-      }
-    };
-
-    const onMouseLeaveWindow = () => {
-      setHeadRotateX(0);
-      setHeadRotateY(0);
-      if (clickCountRef.current === 0) {
-        playSegment('idle');
-      }
-    };
-
-    window.addEventListener('mousemove', onMouseMove, { passive: true });
-    window.addEventListener('mouseleave', onMouseLeaveWindow);
-
-    return () => {
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseleave', onMouseLeaveWindow);
-      if (clickDecayTimerRef.current) clearTimeout(clickDecayTimerRef.current);
-      if (returnToIdleTimerRef.current) clearTimeout(returnToIdleTimerRef.current);
-      if (speechTimerRef.current) clearTimeout(speechTimerRef.current);
-    };
-  }, [playSegment]);
+  }, []);
 
   return {
     activeState,
-    videoRef,
+    activeSlot,
+    videoARef,
+    videoBRef,
     containerRef,
     speechMessage,
-    headRotateX,
-    headRotateY,
     isVideoReady,
     handleCharacterClick,
     handleMouseEnter,

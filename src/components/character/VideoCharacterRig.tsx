@@ -6,11 +6,11 @@ import { Sparkles } from 'lucide-react';
 export const VideoCharacterRig: React.FC = () => {
   const {
     activeState,
-    videoRef,
+    activeSlot,
+    videoARef,
+    videoBRef,
     containerRef,
     speechMessage,
-    headRotateX,
-    headRotateY,
     isVideoReady,
     handleCharacterClick,
     handleMouseEnter,
@@ -19,7 +19,7 @@ export const VideoCharacterRig: React.FC = () => {
 
   return (
     <div className="relative flex flex-col items-center select-none overflow-visible">
-      {/* Speech / Dialogue Bubble (Floating above Navin) */}
+      {/* Speech / Dialogue Bubble (Floating smoothly above Navin) */}
       <AnimatePresence>
         {speechMessage && (
           <motion.div
@@ -35,6 +35,7 @@ export const VideoCharacterRig: React.FC = () => {
               {activeState === 'happy' && <Sparkles className="w-3.5 h-3.5 text-accent-orange" />}
               {activeState === 'playful' && <span>🕶️</span>}
               {activeState === 'surprised' && <span className="text-accent-orange font-black">!</span>}
+              {activeState === 'bored' && <span>👀</span>}
               <span>{speechMessage}</span>
             </div>
             {/* Pointer arrow tail */}
@@ -43,47 +44,54 @@ export const VideoCharacterRig: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* Main Continuous Video Character Canvas with 3D Tilt */}
-      <motion.div
+      {/* Main Continuous Video Character Canvas with 3D Parallax Tilt */}
+      <div
         ref={containerRef}
         onClick={handleCharacterClick}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         data-cursor="hover"
-        animate={{
-          rotateX: headRotateX,
-          rotateY: headRotateY,
-          x: activeState === 'angry' ? [-2, 2, -2, 2, 0] : 0,
-        }}
-        transition={{
-          type: 'spring',
-          stiffness: 300,
-          damping: 22,
-          mass: 0.15,
-        }}
+        className={`relative w-72 sm:w-88 md:w-[420px] lg:w-[460px] aspect-[4/3] rounded-3xl overflow-hidden cursor-pointer group border-2 border-ink-primary/10 shadow-brutal hover:shadow-brutal-orange transition-shadow duration-300 bg-[#F6F2EA] ${
+          activeState === 'angry' ? 'animate-wiggle' : ''
+        }`}
         style={{
-          perspective: 1200,
           transformStyle: 'preserve-3d',
+          willChange: 'transform',
         }}
-        className="relative w-72 sm:w-88 md:w-[420px] lg:w-[460px] aspect-[4/3] rounded-3xl overflow-hidden cursor-pointer group border-2 border-ink-primary/10 shadow-brutal hover:shadow-brutal-orange transition-shadow duration-300 bg-[#F6F2EA]"
       >
-        {/* HTML5 Continuous Character Video */}
+        {/* Dual Video Layer A */}
         <video
-          ref={videoRef}
+          ref={videoARef}
           src="/assets/character/navin-character.mp4"
           poster="/assets/character/navin-official.png"
           muted
           playsInline
           preload="auto"
-          className="w-full h-full object-cover object-center pointer-events-none transition-opacity duration-300"
+          className="absolute inset-0 w-full h-full object-cover object-center pointer-events-none transition-opacity duration-200 ease-in-out"
           style={{
-            opacity: isVideoReady ? 1 : 0.95,
+            opacity: activeSlot === 'A' ? (isVideoReady ? 1 : 0.95) : 0,
+            zIndex: activeSlot === 'A' ? 2 : 1,
           }}
         />
 
-        {/* Soft Ambient Radial Vignette for Editorial Depth */}
-        <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-bg-primary/20 via-transparent to-transparent" />
-      </motion.div>
+        {/* Dual Video Layer B (Seamless standby crossfade) */}
+        <video
+          ref={videoBRef}
+          src="/assets/character/navin-character.mp4"
+          poster="/assets/character/navin-official.png"
+          muted
+          playsInline
+          preload="auto"
+          className="absolute inset-0 w-full h-full object-cover object-center pointer-events-none transition-opacity duration-200 ease-in-out"
+          style={{
+            opacity: activeSlot === 'B' ? 1 : 0,
+            zIndex: activeSlot === 'B' ? 2 : 1,
+          }}
+        />
+
+        {/* Editorial Subtle Vignette */}
+        <div className="absolute inset-0 pointer-events-none z-10 bg-gradient-to-t from-bg-primary/20 via-transparent to-transparent" />
+      </div>
     </div>
   );
 };
