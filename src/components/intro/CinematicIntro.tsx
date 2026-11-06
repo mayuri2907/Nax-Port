@@ -35,14 +35,18 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({ onComplete }) =>
     // Preload critical hero assets during intro
     const preloads = [
       '/assets/character/navin-official.png',
-      '/assets/character/navin-base-sclera.png',
-      '/assets/character/navin-iris-left-clean.png',
-      '/assets/character/navin-iris-right-clean.png',
+      '/assets/character/navin-character.mp4',
       '/assets/character/navin-avatar.png'
     ];
     preloads.forEach((src) => {
-      const img = new Image();
-      img.src = src;
+      if (src.endsWith('.mp4')) {
+        const vid = document.createElement('video');
+        vid.src = src;
+        vid.preload = 'auto';
+      } else {
+        const img = new Image();
+        img.src = src;
+      }
     });
 
     const ctx = gsap.context(() => {
